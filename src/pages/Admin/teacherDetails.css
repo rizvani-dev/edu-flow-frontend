@@ -1,0 +1,411 @@
+.teacher-details-page {
+  padding: 40px;
+  background: #f0f4f8;
+  min-height: 100vh;
+}
+
+.details-header {
+  margin-bottom: 30px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  padding: 10px 20px;
+  border-radius: 12px;
+  color: #475569;
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 25px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.back-btn:hover {
+  background: #f8fafc;
+  color: #2563eb;
+  transform: translateX(-5px);
+}
+
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: white;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.hero-avatar img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 5px solid rgba(255, 255, 255, 0.2);
+}
+
+.hero-meta h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.hero-meta p {
+  margin: 8px 0 0;
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+.details-grid {
+  display: grid;
+  gap: 30px;
+  margin-top: 30px;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.detail-card {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card-alt {
+  background: white;
+  border-left: 8px solid #2563eb;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card-alt .card-icon {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  font-size: 40px;
+  color: #e2e8f0;
+}
+
+.stat-card-alt h3 {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-big {
+  font-size: 48px;
+  font-weight: 900;
+  color: #1e293b;
+  margin: 10px 0;
+}
+
+.salary-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 12px 20px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  flex: 1;
+  max-width: 450px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.search-bar input {
+  border: none;
+  outline: none;
+  margin-left: 12px;
+  width: 100%;
+  font-size: 16px;
+  background: transparent;
+}
+
+.btn-add-salary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+}
+
+.btn-add-salary:hover {
+  background: #059669;
+  transform: translateY(-2px);
+}
+
+.salary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+}
+
+.salary-card {
+  background: white;
+  padding: 25px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.salary-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.salary-card.paid { border-top: 6px solid #10b981; }
+.salary-card.pending { border-top: 6px solid #f59e0b; }
+
+.s-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.s-card-head h4 {
+  margin: 0;
+  font-size: 18px;
+  color: #475569;
+}
+
+.status-pill {
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.status-pill.paid { background: #dcfce7; color: #166534; }
+.status-pill.pending { background: #fef3c7; color: #92400e; }
+
+.s-amount {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 20px;
+}
+
+.screenshot-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 12px;
+  background: #eff6ff;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.screenshot-link:hover { text-decoration: underline; }
+
+.s-actions {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 20px;
+}
+
+.btn-approve {
+  width: 100%;
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-revert {
+  width: 100%;
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-delete-salary {
+  width: 100%;
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  transition: all 0.2s ease;
+}
+
+.btn-delete-salary:hover {
+  background: #ffe4e6;
+  color: #9f1239;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(8px);
+}
+
+.modal-box {
+  background: white;
+  width: 90%;
+  max-width: 550px;
+  border-radius: 24px;
+  padding: 40px;
+  animation: modalSlideUp 0.3s ease-out;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.modal-header h3 { font-size: 24px; font-weight: 800; margin: 0; }
+.modal-header button { background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8; }
+
+.salary-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.salary-form input, .salary-form select {
+  padding: 14px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.salary-form input:focus { border-color: #2563eb; outline: none; }
+
+.file-upload-area label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 30px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  cursor: pointer;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.upload-preview {
+  width: 100%;
+  max-height: 250px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-top: 15px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.btn-cancel {
+  flex: 1;
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  padding: 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-submit {
+  flex: 2;
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.no-data {
+  text-align: center;
+  padding: 60px;
+  color: #94a3b8;
+  font-style: italic;
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  .profile-hero { flex-direction: column; text-align: center; padding: 30px; }
+  .form-row { flex-direction: column; }
+  .teacher-details-page { padding: 20px; }
+}
+
+.btn-submit:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}

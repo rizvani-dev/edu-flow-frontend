@@ -1,0 +1,27 @@
+.page-loader {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  gap: 0.85rem;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at top, rgba(37, 99, 235, 0.16), transparent 32%),
+    linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+  color: #16325b;
+  text-align: center;
+}
+
+.page-loader__orb {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  border: 3px solid rgba(37, 99, 235, 0.18);
+  border-top-color: #2563eb;
+  animation: page-loader-spin 0.85s linear infinite;
+}
+
+@keyframes page-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

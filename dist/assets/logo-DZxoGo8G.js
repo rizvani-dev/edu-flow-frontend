@@ -1,0 +1,1 @@
+var e=`/assets/logo-DuW62jy3.png`;export{e as t};
