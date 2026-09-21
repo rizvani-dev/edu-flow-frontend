@@ -1,5 +1,5 @@
-const DEV_SERVER_ORIGIN = 'http://localhost:5000';
-const PROD_SERVER_ORIGIN = 'https://pretty-mercy-production-aca0.up.railway.app';
+//const DEV_SERVER_ORIGIN = 'http://localhost:5000';
+const PROD_SERVER_ORIGIN = 'https://rizo99.serv00.net/';
 const configuredServerOrigin = String(import.meta.env.VITE_SERVER_ORIGIN || '').trim();
 const configuredProdServerOrigin = String(import.meta.env.VITE_PRODUCTION_SERVER_ORIGIN || '').trim();
 
