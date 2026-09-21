@@ -1,0 +1,17 @@
+:root {
+  color-scheme: light;
+  --app-bg: #f8fafc;
+  --text-primary: #0f172a;
+  --text-muted: #475569;
+  --surface: #ffffff;
+  --surface-border: rgba(148, 163, 184, 0.18);
+  --shadow-soft: 0 16px 42px rgba(15, 23, 42, 0.08);
+  --brand: #2563eb;
+  --brand-strong: #1d4ed8;
+  --danger: #dc2626;
+  --success: #16a34a;
+}
+
+#root {
+  min-height: 100vh;
+}

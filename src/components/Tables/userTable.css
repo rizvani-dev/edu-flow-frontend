@@ -1,0 +1,219 @@
+.user-table-container {
+  margin-bottom: 30px;
+}
+
+.user-table-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.user-table-subtitle {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  margin: 0.35rem 0 0;
+}
+
+.add-user-btn {
+  white-space: nowrap;
+}
+
+.offline-warning-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 14px;
+  margin: 10px 0 20px;
+  color: #92400e;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.user-cards-wrapper {
+  padding: 10px 0;
+}
+
+.user-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.loading-grid-state,
+.empty-grid-state {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-muted);
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-card-item {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.user-card-item:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px -12px rgba(15, 23, 42, 0.15);
+  border-color: var(--brand-primary);
+}
+
+.user-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.user-card-avatar-wrap {
+  position: relative;
+  width: 68px;
+  height: 68px;
+}
+
+.user-card-img,
+.user-card-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  object-fit: cover;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.12);
+}
+
+.user-card-avatar-fallback {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  color: var(--brand-primary);
+  font-weight: 800;
+  font-size: 1.5rem;
+}
+
+.status-indicator-dot {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid white;
+}
+
+.status-indicator-dot.is-online { background: #10b981; box-shadow: 0 0 8px #10b981; }
+.status-indicator-dot.is-offline { background: #94a3b8; }
+
+.user-card-role-badge {
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(4px);
+}
+
+.user-card-name {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.user-card-email {
+  margin: 4px 0 16px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.user-card-meta-grid {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(241, 245, 249, 0.5);
+  border-radius: 16px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.meta-icon {
+  color: #64748b;
+}
+
+.user-card-bio {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+  min-height: 44px;
+}
+
+.user-card-footer {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.user-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.card-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  border: none;
+  background: #f8fafc;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.card-action-btn:hover { background: #f1f5f9; transform: scale(1.05); }
+
+.card-action-btn span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.unread-count-chip {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 8px;
+  border: 2px solid white;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+}

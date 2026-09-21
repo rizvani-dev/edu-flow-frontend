@@ -1,0 +1,35 @@
+:root {
+  color-scheme: light;
+  --bg-base: #ecf4ff;
+  --bg-elevated: rgba(255, 255, 255, 0.82);
+  
+  /* Sophisticated Glassmorphism */
+  --glass-surface: linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4));
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --shadow-glass: 0 18px 48px rgba(15, 23, 42, 0.12);
+  --shadow-soft: 0 14px 32px rgba(15, 23, 42, 0.08);
+  --text-primary: #10203b;
+  --text-muted: #4a5d7a;
+  --text-soft: #5d7294;
+  --brand-primary: #0f766e;
+  --brand-secondary: #2563eb;
+  --brand-accent: #f59e0b;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --surface-border: rgba(148, 163, 184, 0.22);
+
+  /* Layout Tokens */
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+  --spacing-main: 24px;
+  --transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --glass-blur: blur(18px);
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(125, 211, 252, 0.4), transparent 28%),
+    radial-gradient(circle at top right, rgba(45, 212, 191, 0.26), transparent 26%),
+    linear-gradient(180deg, #eef6ff 0%, #dfeffc 100%);
+}

@@ -1,0 +1,214 @@
+.announcement-form-card,
+.announcement-item,
+.teacher-homework-card {
+  position: relative;
+  overflow: hidden;
+    
+}
+
+
+.announcement-form-card h3,
+.announcement-item h4 {
+  margin: 0;
+}
+
+.announcement-form-card .glass-form-stack {
+  margin-top: 0.5rem;
+}
+
+.publish-btn {
+  width: 100%;
+}
+
+.announcement-item{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+   padding:20px ;
+  }
+
+.announcements-list {
+  display: grid;
+  gap: 1rem;
+  
+}
+
+
+.announcement-glow {
+  position: absolute;
+
+  inset: auto auto 72% -8%;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.24), transparent 70%);
+  filter: blur(10px);
+}
+
+.announcement-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.announcement-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.38rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--brand-secondary);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.7rem;
+}
+
+.announcement-title {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.announcement-description {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+.announcement-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+  margin-top: 0.8rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.announcement-author strong {
+  color: var(--text-primary);
+}
+
+.delete-btn {
+  flex-shrink: 0;
+}
+
+.empty-state {
+  border-radius: 24px;
+}
+
+.homework-grid-teacher {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.teacher-homework-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0.64));
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.48);
+  box-shadow: var(--shadow-glass);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.teacher-homework-card:hover {
+  transform: translateY(-4px);
+}
+
+.hw-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 12px;
+}
+
+.hw-subject-badge {
+  background: rgba(16, 185, 129, 0.12);
+  color: #065f46;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.hw-desc {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin-bottom: 15px;
+}
+
+.hw-card-footer {
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+  padding-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hw-delete-icon-btn {
+  color: #ef4444;
+  background: rgba(254, 226, 226, 0.8);
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+}
+
+.announcement-card.glass-card,
+.homework-card.glass-card {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.12));
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.14);
+  backdrop-filter: blur(18px);
+}
+
+.whatsapp-reactions,
+.ann-reactions-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+  position: relative;
+}
+
+.ann-reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--text-primary);
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  font-size: 0.85rem;
+}
+
+.ann-reaction-chip:hover {
+  transform: translateY(-1px);
+}
+
+.homework-card .ann-reaction-chip {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .announcement-header {
+    flex-direction: column;
+  }
+}
