@@ -1,15 +1,22 @@
-//const DEV_SERVER_ORIGIN = 'http://localhost:5000';
-const PROD_SERVER_ORIGIN = 'https://rizo99.serv00.net/';
+const DEV_SERVER_ORIGIN = 'http://localhost:5000';
+const PROD_SERVER_ORIGIN = 'https://rizo99.serv00.net';
 const configuredServerOrigin = String(import.meta.env.VITE_SERVER_ORIGIN || '').trim();
 const configuredProdServerOrigin = String(import.meta.env.VITE_PRODUCTION_SERVER_ORIGIN || '').trim();
+const LEGACY_RAILWAY_ORIGIN = 'https://pretty-mercy-production-aca0.up.railway.app';
+
+const productionServerOrigin = configuredProdServerOrigin
+  .replace(/\/$/, '')
+  .toLowerCase() === LEGACY_RAILWAY_ORIGIN
+  ? PROD_SERVER_ORIGIN
+  : configuredProdServerOrigin;
 
 let effectiveServerOrigin;
 
 if (import.meta.env.DEV) {
   effectiveServerOrigin = configuredServerOrigin || DEV_SERVER_ORIGIN;
 } else {
-  if (configuredProdServerOrigin) {
-    effectiveServerOrigin = configuredProdServerOrigin;
+  if (productionServerOrigin) {
+    effectiveServerOrigin = productionServerOrigin;
   } else if (configuredServerOrigin && configuredServerOrigin !== DEV_SERVER_ORIGIN) {
     effectiveServerOrigin = configuredServerOrigin;
   } else {

@@ -1,0 +1,1 @@
+var e=()=>JSON.parse(localStorage.getItem(`sync_queue`)||`[]`),t=e=>localStorage.setItem(`sync_queue`,JSON.stringify(e)),n=n=>{let r=e();r.push({...n,id:Date.now()+Math.random(),timestamp:new Date().toISOString()}),t(r)};export{n as t};
