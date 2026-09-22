@@ -1,5 +1,6 @@
 .landing-shell {
   min-height: 100vh;
+  overflow: hidden;
   color: #0f172a;
   background:
     radial-gradient(circle at top left, rgba(15, 118, 110, 0.18), transparent 24%),
@@ -16,7 +17,7 @@
 }
 
 .landing-hero {
-  padding: 28px 0 64px;
+  padding: 24px 0 72px;
 }
 
 .landing-nav,
@@ -34,6 +35,12 @@
 .landing-nav,
 .landing-cta {
   justify-content: space-between;
+}
+
+.landing-nav {
+  min-height: 58px;
+  position: relative;
+  z-index: 2;
 }
 
 .landing-brand {
@@ -120,7 +127,8 @@
 }
 
 .landing-copy h1 {
-  font-size: clamp(2.4rem, 5vw, 4.7rem);
+  font-size: clamp(2.35rem, 5vw, 4.7rem);
+  letter-spacing: 0;
   max-width: 11ch;
 }
 
@@ -143,6 +151,20 @@
   color: #fff;
   background: linear-gradient(135deg, #0f766e, #2563eb);
   box-shadow: 0 22px 44px rgba(37, 99, 235, 0.2);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.landing-primary-btn:hover,
+.landing-primary-btn:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 26px 50px rgba(37, 99, 235, 0.28);
+}
+
+.landing-login-btn:focus-visible,
+.landing-secondary-link:focus-visible,
+.landing-primary-btn:focus-visible {
+  outline: 3px solid rgba(245, 158, 11, 0.55);
+  outline-offset: 3px;
 }
 
 .landing-proof {
@@ -261,7 +283,7 @@
 }
 
 .landing-section {
-  padding: 28px 0 12px;
+  padding: 40px 0 20px;
 }
 
 .landing-section__head {
@@ -310,6 +332,10 @@
   gap: 20px;
 }
 
+.landing-cta h2 {
+  max-width: 22ch;
+}
+
 .landing-footer {
   padding: 0 0 32px;
   display: flex;
@@ -342,6 +368,17 @@
 }
 
 @media (max-width: 720px) {
+  .landing-hero,
+  .landing-section,
+  .landing-cta,
+  .landing-footer {
+    width: min(100% - 24px, 560px);
+  }
+
+  .landing-hero {
+    padding-top: 14px;
+  }
+
   .landing-nav,
   .landing-cta,
   .landing-footer {
@@ -352,5 +389,22 @@
   .landing-proof {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .landing-actions,
+  .landing-primary-btn {
+    width: 100%;
+  }
+
+  .landing-primary-btn {
+    justify-content: center;
+  }
+
+  .landing-copy h1 {
+    font-size: clamp(2.25rem, 12vw, 3.6rem);
+  }
+
+  .landing-cta {
+    padding: 22px;
   }
 }

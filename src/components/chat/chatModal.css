@@ -320,9 +320,56 @@
   .chat-modal-overlay { padding: 0; }
   .chat-modal__window {
     width: 100%;
-    height: 100%;
+    height: 100dvh;
+    min-height: 0;
     max-width: none;
     border-radius: 0;
+  }
+
+  .chat-modal__header {
+    padding: 12px;
+  }
+
+  .chat-modal__actions {
+    gap: 6px;
+  }
+
+  .chat-modal__contact-info {
+    max-width: calc(100vw - 170px);
+  }
+
+  .chat-modal__name,
+  .chat-modal__meta,
+  .chat-modal__status span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chat-modal__body {
+    padding: 16px 12px;
+  }
+
+  .chat-modal__footer {
+    padding: 10px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  .chat-modal__input-row {
+    gap: 4px;
+    padding: 4px 6px;
+  }
+
+  .chat-modal__attach-btn,
+  .chat-modal__send-btn {
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .chat-modal__input {
+    min-width: 0;
+    padding: 8px 4px;
   }
 }
 

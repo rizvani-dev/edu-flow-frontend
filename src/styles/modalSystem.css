@@ -14,6 +14,11 @@
   transition: var(--transition-smooth);
 }
 
+/* Destructive confirmations must remain visible above the shared chat layer. */
+.delete-modal-overlay {
+  z-index: 200000 !important;
+}
+
 .modal-box,
 .modal-content {
   padding: 0;

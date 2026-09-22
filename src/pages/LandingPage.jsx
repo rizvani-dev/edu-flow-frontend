@@ -46,8 +46,8 @@ export default function LandingPage() {
 
   return (
     <div className="landing-shell">
-      <section className="landing-hero">
-        <div className="landing-nav">
+      <header className="landing-hero">
+        <nav className="landing-nav" aria-label="Main navigation">
           <div className="landing-brand">
             <div className="landing-brand__logo">
               <FaGraduationCap />
@@ -61,7 +61,7 @@ export default function LandingPage() {
           <button type="button" className="landing-login-btn" onClick={handleLoginClick}>
             {user ? 'Open Dashboard' : 'Login'}
           </button>
-        </div>
+        </nav>
 
         <div className="landing-hero__content">
           <div className="landing-copy">
@@ -143,7 +143,7 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </header>
 
       <section className="landing-section">
         <div className="landing-section__head">
@@ -186,7 +186,7 @@ export default function LandingPage() {
         </button>
       </section>
 
-      <footer className="landing-footer">
+      <footer className="landing-footer" aria-label="EduFlow footer">
         <p>EduFlow school management software for attendance, homework, fees, communication, and AI reporting.</p>
         <Link to="/login">Portal Access</Link>
       </footer>
