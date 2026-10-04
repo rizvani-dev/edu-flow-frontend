@@ -1,4 +1,5 @@
 import React, { useMemo, useState, memo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   FaCheck,
   FaCheckSquare,
@@ -323,7 +324,7 @@ const ChatModal = ({
 
   if (!isOpen || !contact) return null;
 
-  return (
+  return createPortal(
     <>
       <div className="chat-modal-overlay" onClick={onClose} role="presentation">
         <section
@@ -493,7 +494,8 @@ const ChatModal = ({
           </div>
         </div>
       )}
-    </>
+    </>,
+    document.body
   );
 };
 

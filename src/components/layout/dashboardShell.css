@@ -8,6 +8,15 @@
   color: #102033;
 }
 
+.edu-shell { color: #14243d; }
+.edu-sidebar { border-right-color: #e4eaf2; box-shadow: 10px 0 32px rgba(15,23,42,.045); }
+.edu-sidebar__brand img { border-radius: 14px; }
+.edu-sidebar__item { transition: background-color 160ms ease, color 160ms ease, transform 160ms ease; }
+.edu-sidebar__item:hover { transform: translateX(2px); }
+.edu-sidebar__item.active { background: linear-gradient(100deg,rgba(15,118,110,.12),rgba(37,99,235,.06)); border-color: rgba(15,118,110,.14); }
+.edu-topbar { background: rgba(249,251,254,.94); border-bottom-color: #e5ebf3; }
+.edu-shell__content { padding: clamp(14px, 2vw, 28px); }
+
 .edu-sidebar {
   position: sticky;
   top: 0;
@@ -147,6 +156,8 @@
 
 .edu-shell__body {
   min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .edu-topbar {
@@ -232,6 +243,9 @@
 
 .edu-shell__content {
   min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  min-width: 0;
   padding: 24px;
 }
 
@@ -294,4 +308,21 @@
   .edu-shell__content {
     padding: 14px;
   }
+
+  .dashboard-shell { padding: 0 12px 24px; }
+  .dashboard-toolbar { align-items: stretch; }
+  .dashboard-toolbar > * { max-width: 100%; }
+  .ui-grid.two, .ui-grid.three { grid-template-columns: minmax(0, 1fr); }
+  .current-fee-card { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 18px; }
+  .current-fee-action, .current-fee-action button { width: 100%; }
+  .notification-dropdown { inset: 68px 10px auto; width: auto; max-width: none; max-height: calc(100dvh - 84px); }
+  .lite-progress-row, .lite-segment-row { grid-template-columns: minmax(70px, 92px) minmax(50px, 1fr) auto; gap: 8px; }
+}
+
+@media (max-width: 420px) {
+  .edu-topbar__title h1 { font-size: 1.05rem; }
+  .edu-topbar__title p { font-size: 0.8rem; }
+  .section-header { flex-direction: column; }
+  .fee-header-action { width: 100%; justify-content: center; }
+  .ui-card { padding: 15px; }
 }

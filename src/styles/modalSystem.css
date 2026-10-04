@@ -14,9 +14,25 @@
   transition: var(--transition-smooth);
 }
 
+/* Keep every dashboard dialog above sticky/legacy role navigation. */
+.modal-overlay {
+  z-index: 200000 !important;
+  isolation: isolate;
+}
+
+.chat-modal-overlay,
+.chat-lightbox-overlay {
+  z-index: 200100 !important;
+}
+
+body:has(.modal-overlay),
+body:has(.chat-modal-overlay) {
+  overflow: hidden;
+}
+
 /* Destructive confirmations must remain visible above the shared chat layer. */
 .delete-modal-overlay {
-  z-index: 200000 !important;
+  z-index: 200200 !important;
 }
 
 .modal-box,

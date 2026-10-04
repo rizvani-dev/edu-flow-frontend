@@ -57,6 +57,15 @@ export const openAdminReportPrintWindow = ({ analytics, template, logoUrl }) => 
     )
     .join('');
 
+  const barChart = (rows, title, valueKey, formatter = (value) => `${Number(value || 0).toFixed(1)}%`) => `
+    <div class="chart-card"><h4>${escapeHtml(title)}</h4>
+      ${rows.length ? rows.map((row) => {
+        const value = Math.max(0, Math.min(100, Number(row[valueKey] || 0)));
+        return `<div class="chart-row"><span>${escapeHtml(row.class_name || row.subject || 'Class')}</span><div class="chart-track"><i style="width:${value}%"></i></div><strong>${escapeHtml(formatter(value))}</strong></div>`;
+      }).join('') : '<p class="muted">No analytics data for this period.</p>'}
+    </div>`;
+  const chartsMarkup = `<div class="chart-grid">${barChart(analytics.attendanceByClass || [], 'Attendance by class', 'attendance_percentage')}${barChart(analytics.resultsByClass || [], 'Study results by class', 'average_marks')}${barChart((analytics.feeByClass || []).map((row) => ({ ...row, paid_percentage: Number(row.total_fees) > 0 ? Number(row.paid_fees || 0) / Number(row.total_fees) * 100 : 0 })), 'Fee submission by class', 'paid_percentage')}</div>`;
+
   const normalizeLogoUrl = (url) => {
     if (!url) return null;
     if (url.startsWith('http')) return url;
@@ -132,6 +141,14 @@ export const openAdminReportPrintWindow = ({ analytics, template, logoUrl }) => 
           .summary-card strong {
             font-size: 28px;
           }
+          .chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 20px 28px 0; }
+          .chart-card { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--soft); }
+          .chart-card h4 { margin: 0 0 12px; }
+          .chart-row { display: grid; grid-template-columns: minmax(70px, 1fr) minmax(60px, 2fr) 54px; gap: 8px; align-items: center; margin: 9px 0; font-size: 11px; }
+          .chart-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .chart-row strong { text-align: right; }
+          .chart-track { height: 8px; overflow: hidden; border-radius: 99px; background: #e2e8f0; }
+          .chart-track i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
           .section {
             padding: 20px 28px 0;
           }
@@ -172,6 +189,7 @@ export const openAdminReportPrintWindow = ({ analytics, template, logoUrl }) => 
             body { padding: 0; }
             .sheet { border: none; border-radius: 0; }
           }
+          @media (max-width: 640px) { .chart-grid { grid-template-columns: 1fr; } }
         </style>
       </head>
       <body>
@@ -199,6 +217,8 @@ export const openAdminReportPrintWindow = ({ analytics, template, logoUrl }) => 
             <div class="summary-card"><h4>Total Classes</h4><strong>${analytics.summary.totalClasses}</strong></div>
             <div class="summary-card"><h4>Announcements</h4><strong>${analytics.summary.totalAnnouncements}</strong></div>
           </div>
+          <p class="muted" style="padding:0 28px">Report scope: ${escapeHtml(template.scopeClass || 'All classes')} · ${escapeHtml(template.scopePeriod || 'All available periods')}</p>
+          ${chartsMarkup}
 
           <div class="section">
             <h3>Attendance Analytics</h3>

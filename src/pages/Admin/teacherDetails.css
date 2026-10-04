@@ -409,3 +409,13 @@
   opacity: 0.72;
   cursor: not-allowed;
 }
+
+.salary-entry-modal { width: min(100%, 720px) !important; max-height: calc(100dvh - 32px) !important; border: 1px solid #dbe6f3; background: #fff; box-shadow: 0 28px 90px rgba(15,23,42,.28); }
+.salary-entry-modal .modal-header { position: sticky; top: 0; z-index: 1; background: #fff; color: #10203b; }
+.salary-entry-modal .salary-form { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.salary-entry-modal input,.salary-entry-modal select,.salary-entry-modal textarea { box-sizing: border-box; max-width: 100%; }
+@media (max-width: 640px) {
+  .salary-entry-modal { width: 100% !important; max-height: calc(100dvh - 16px) !important; }
+  .salary-entry-modal .salary-form > div[style*="grid-template-columns"] { grid-template-columns: minmax(0,1fr) !important; }
+  .salary-entry-modal .salary-form { padding: 16px !important; }
+}

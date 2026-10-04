@@ -41,6 +41,7 @@ import AnnouncementForm from '../../components/Announcements/AnnouncementForm';
 import AnnouncementList from '../../components/Announcements/AnnouncementList';
 import ChatModal from '../../components/chat/ChatModal';
 import DashboardShell from '../../components/layout/DashboardShell';
+import OverlayPortal from '../../components/common/OverlayPortal';
 import AiInsightPanel from '../../components/ai/AiInsightPanel';
 import AiTopAchieversPanel from '../../components/ai/AiTopAchieversPanel';
 import { openAdminReportPrintWindow } from '../../utils/adminReportPrint';
@@ -122,6 +123,18 @@ const AdminDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [feePaymentRequests, setFeePaymentRequests] = useState([]);
+  const [teacherSalaryRequests, setTeacherSalaryRequests] = useState([]);
+  const [salaryRequestReview, setSalaryRequestReview] = useState({});
+  const [salaryRequestBusy, setSalaryRequestBusy] = useState(null);
+  const [feeProposals, setFeeProposals] = useState([]);
+  const [proposalAmounts, setProposalAmounts] = useState({});
+  const [proposalActionId, setProposalActionId] = useState(null);
+  const [feeStructures, setFeeStructures] = useState([]);
+  const [feeStudents, setFeeStudents] = useState([]);
+  const [feeEditor, setFeeEditor] = useState({ class_id: '', monthly_fee: '', fine_amount: '0', other_charges: '0', tax_percent: '0', discount_amount: '0' });
+  const [studentFeeEditor, setStudentFeeEditor] = useState({ student_id: '', fine_amount: '', tax_percent: '', discount_amount: '' });
+  const [feeSaving, setFeeSaving] = useState(false);
+  const [feeGenerating, setFeeGenerating] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [feeRequestModal, setFeeRequestModal] = useState({ open: false, request: null, remarks: '', saving: false });
   const [activeClassId, setActiveClassId] = useState('');
@@ -171,6 +184,20 @@ const AdminDashboard = () => {
   const [lightboxImage, setLightboxImage] = useState(null);
   const [aiAchievers, setAiAchievers] = useState({ cards: [], summary: '' });
   const [activeWorkspace, setActiveWorkspace] = useState(() => getUiState(CACHE_KEYS.DASHBOARD_VIEW('admin', user?.id || 'anon'), 'overview'));
+  const loadTeacherSalaryRequests = useCallback(async () => {
+    try { const response = await API.get('/admin/salary-requests'); setTeacherSalaryRequests(response.data.requests || []); }
+    catch (error) { toast.error(error.response?.data?.message || 'Could not load salary requests'); }
+  }, []);
+  useEffect(() => { if (activeWorkspace === 'salary') loadTeacherSalaryRequests(); }, [activeWorkspace, loadTeacherSalaryRequests]);
+  const reviewSalaryRequest = async (requestId, status) => {
+    setSalaryRequestBusy(requestId);
+    try {
+      await API.put(`/admin/salary-requests/${requestId}`, { status, admin_response: salaryRequestReview[requestId] || '' });
+      toast.success(`Salary request ${status}`);
+      await loadTeacherSalaryRequests();
+    } catch (error) { toast.error(error.response?.data?.message || 'Could not review salary request'); }
+    finally { setSalaryRequestBusy(null); }
+  };
   const unreadCount = notifications.filter(n => !n.is_read).length;
   const subscriptionDaysLeft = useMemo(() => {
     const expiresAt = dashboard?.school?.subscription_expires_at;
@@ -246,6 +273,143 @@ const AdminDashboard = () => {
     }
   }, []);
 
+  const fetchFeeProposals = useCallback(async () => {
+    try {
+      const response = await API.get('/fees/proposals/pending');
+      const proposals = response.data.proposals || [];
+      setFeeProposals(proposals);
+      setProposalAmounts((current) => {
+        const next = { ...current };
+        proposals.forEach((proposal) => {
+          if (next[proposal.id] == null) next[proposal.id] = proposal.proposed_amount ?? proposal.configured_amount ?? '';
+        });
+        return next;
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not load fee proposals');
+    }
+  }, []);
+
+  const reviewFeeProposal = async (proposal, status) => {
+    setProposalActionId(proposal.id);
+    try {
+      const response = await API.put(`/fees/proposals/${proposal.id}/review`, {
+        status,
+        approved_amount: status === 'approved' ? proposalAmounts[proposal.id] : undefined,
+      });
+      toast.success(response.data.message || `Proposal ${status}`);
+      await Promise.all([fetchFeeProposals(), loadDashboard(activeClassId, userPage, userSearch, true)]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not review fee proposal');
+    } finally {
+      setProposalActionId(null);
+    }
+  };
+
+  const fetchFeeStructures = useCallback(async () => {
+    try {
+      const response = await API.get('/fees/structure');
+      const structures = response.data.structures || [];
+      setFeeStructures(structures);
+      setFeeEditor((previous) => {
+        if (!previous.class_id && structures[0]) {
+          return { ...previous, class_id: String(structures[0].class_id) };
+        }
+        return previous;
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not load class fee settings');
+    }
+  }, []);
+
+  const fetchFeeStudents = useCallback(async () => {
+    try {
+      const response = await API.get('/fees/students');
+      setFeeStudents(response.data.students || []);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not load students for fee settings');
+    }
+  }, []);
+
+  const saveClassFeeStructure = async (event) => {
+    event.preventDefault();
+    if (!feeEditor.class_id) return toast.error('Select a class first');
+    setFeeSaving(true);
+    try {
+      await API.post('/fees/structure', {
+        class_id: Number(feeEditor.class_id),
+        monthly_fee: Number(feeEditor.monthly_fee),
+        fine_amount: Number(feeEditor.fine_amount || 0),
+        other_charges: Number(feeEditor.other_charges || 0),
+        tax_percent: Number(feeEditor.tax_percent || 0),
+        discount_amount: Number(feeEditor.discount_amount || 0),
+      });
+      toast.success('Class fee settings saved');
+      await fetchFeeStructures();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not save class fee settings');
+    } finally {
+      setFeeSaving(false);
+    }
+  };
+
+  const saveStudentFeeAdjustment = async (event) => {
+    event.preventDefault();
+    if (!studentFeeEditor.student_id) return toast.error('Select a student first');
+    try {
+      await API.put('/fees/student-adjustments', {
+        ...studentFeeEditor,
+        student_id: Number(studentFeeEditor.student_id),
+      });
+      const hasOverrides = ['fine_amount', 'tax_percent', 'discount_amount'].some((key) => studentFeeEditor[key] !== '');
+      toast.success(hasOverrides ? 'Student fee adjustment saved for future invoices' : 'Student adjustments cleared; class defaults will apply');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not save student fee adjustment');
+    }
+  };
+
+  const loadStudentFeeAdjustment = async (studentId) => {
+    setStudentFeeEditor({ student_id: studentId, fine_amount: '', tax_percent: '', discount_amount: '' });
+    if (!studentId) return;
+    try {
+      const response = await API.get(`/fees/student-adjustments/${studentId}`);
+      const adjustment = response.data.adjustment;
+      if (adjustment) setStudentFeeEditor({
+        student_id: studentId,
+        fine_amount: adjustment.fine_amount ?? '',
+        tax_percent: adjustment.tax_percent ?? '',
+        discount_amount: adjustment.discount_amount ?? '',
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not load student adjustment');
+    }
+  };
+
+  const generateMonthlyClassFees = async () => {
+    if (!feeEditor.class_id) return toast.error('Select a class first');
+    setFeeGenerating(true);
+    try {
+      const response = await API.post('/fees/generate', {
+        class_id: Number(feeEditor.class_id), month: filterMonth === 'all' ? new Date().toLocaleString('en-US', { month: 'long' }) : filterMonth,
+        year: Number(filterYear),
+      });
+      toast.success(response.data.message || 'Monthly fees generated');
+      await loadDashboard(activeClassId, userPage, userSearch, true);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not generate monthly fees');
+    } finally {
+      setFeeGenerating(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeWorkspace === 'billing') {
+      fetchFeeStructures();
+      fetchFeeProposals();
+      fetchFeeStudents();
+    }
+  }, [activeWorkspace, fetchFeeStructures, fetchFeeProposals, fetchFeeStudents]);
+
   const openFeeRequestModal = useCallback(async (requestId, fallbackRequest = null) => {
     if (!requestId && !fallbackRequest?.id) {
       toast.error('Fee payment request details were not found');
@@ -257,7 +421,11 @@ const AdminDashboard = () => {
       feePaymentRequests.find((item) => Number(item.id) === Number(requestId)) ||
       null;
 
-    if (localRequest) {
+    if (
+      localRequest &&
+      !String(localRequest.screenshot_url || '').startsWith('private-storage://') &&
+      !String(localRequest.screenshot_url || '').startsWith('private-local://')
+    ) {
       setFeeRequestModal({ open: true, request: localRequest, remarks: localRequest.remarks || '', saving: false });
     }
 
@@ -266,7 +434,7 @@ const AdminDashboard = () => {
       const pendingRequests = res.data.requests || [];
       setFeePaymentRequests(pendingRequests);
 
-      const request =
+      let request =
         pendingRequests.find((item) => Number(item.id) === Number(requestId || fallbackRequest?.id)) ||
         localRequest;
 
@@ -275,11 +443,17 @@ const AdminDashboard = () => {
         return;
       }
 
+      if (
+        String(request.screenshot_url || '').startsWith('private-storage://') ||
+        String(request.screenshot_url || '').startsWith('private-local://')
+      ) {
+        const proofResponse = await API.get(`/fees/payment-requests/${request.id}/proof`);
+        request = { ...request, signed_screenshot_url: proofResponse.data.url };
+      }
+
       setFeeRequestModal({ open: true, request, remarks: request.remarks || '', saving: false });
     } catch (error) {
-      if (!localRequest) {
-        toast.error(error.response?.data?.message || 'Failed to load fee payment request');
-      }
+      toast.error(error.response?.data?.message || 'Failed to load fee payment request');
     }
   }, [feePaymentRequests]);
 
@@ -1269,6 +1443,8 @@ const AdminDashboard = () => {
         template: {
           ...reportTemplate,
           schoolName: reportTemplate.schoolName?.trim() || dashboard?.school?.name || 'EduFlow',
+          scopePeriod: `${filterMonth === 'all' ? 'All months' : filterMonth} ${filterYear}`,
+          scopeClass: selectedClassLabel,
         },
         logoUrl: currentLogo,
       });
@@ -1292,6 +1468,25 @@ const AdminDashboard = () => {
     name: row.class_name,
     percentage: Number(row.attendance_percentage || 0),
   }));
+
+  const classAchievers = (dashboard?.classes || []).map((classRow) => {
+    const attendance = dashboard?.attendanceByClass?.find((row) => Number(row.class_id) === Number(classRow.id));
+    const results = dashboard?.resultsByClass?.find((row) => Number(row.class_id) === Number(classRow.id));
+    const fees = dashboard?.feeByClass?.find((row) => Number(row.class_id) === Number(classRow.id));
+    const attendancePercent = Number(attendance?.attendance_percentage || 0);
+    const studyPercent = Number(results?.average_marks || 0);
+    const feePercent = Number(fees?.total_fees) > 0 ? Math.round((Number(fees.paid_fees || 0) / Number(fees.total_fees)) * 100) : 0;
+    const disciplineTotal = Number(attendance?.present_count || 0) + Number(attendance?.late_count || 0) + Number(attendance?.absent_count || 0);
+    const disciplinePercent = disciplineTotal ? Math.round((Number(attendance?.present_count || 0) / disciplineTotal) * 100) : 0;
+    return {
+      type: 'class', id: classRow.id, title: classRow.name, className: classRow.name,
+      studentCount: Number(classRow.student_count || 0), attendancePercent, resultPercent: studyPercent,
+      feePercent, disciplinePercent,
+      achievementPercent: Math.round(studyPercent * 0.45 + attendancePercent * 0.35 + feePercent * 0.2),
+      description: `On-time attendance ${disciplinePercent}%; class standing uses study results, attendance, and fee submission.`,
+    };
+  }).sort((a, b) => b.achievementPercent - a.achievementPercent);
+  const topClassAchiever = classAchievers.length ? [{ ...classAchievers[0], rank: 1 }] : [];
 
   const announcementHighlights = dashboard?.recentAnnouncements || [];
 
@@ -1362,7 +1557,9 @@ const AdminDashboard = () => {
         { id: 'people', label: 'Users & Teachers', icon: FaUsers },
         { id: 'reports', label: 'Reports', icon: FaChartBar },
         { id: 'communication', label: 'Communication', icon: FaComments, badge: unreadCount || undefined },
-        { id: 'billing', label: 'Billing', icon: FaMoneyBillWave, badge: feePaymentRequests.length || undefined },
+        { id: 'chat', label: 'Direct chats', icon: FaComments },
+        { id: 'billing', label: 'Billing', icon: FaMoneyBillWave, badge: (feePaymentRequests.length + feeProposals.length) || undefined },
+        { id: 'salary', label: 'Salary requests', icon: FaMoneyBillWave, badge: teacherSalaryRequests.filter((request) => request.status === 'pending').length || undefined },
       ]}
     >
     <div className="admin-shell dashboard-frame">
@@ -1407,7 +1604,7 @@ const AdminDashboard = () => {
         <AiInsightPanel
           title="Strategic Intelligence Engine"
           subtitle="Automated analysis of institutional health, attendance momentum, and financial flow"
-          summary={aiAchievers.summary || `Currently analyzing metrics for ${selectedClassLabel}. Real-time synchronization is active across all academic streams.`}
+          summary={topClassAchiever.length ? `Class ranking uses live study results (45%), attendance (35%), and fee submission (20%). ${topClassAchiever[0].title} currently leads.` : `Currently analyzing metrics for ${selectedClassLabel}. Real-time synchronization is active across all academic streams.`}
           progressPercent={summary.totalStudents ? Math.min(100, Math.round((summary.totalAnnouncements / Math.max(summary.totalStudents, 1)) * 100)) : 0}
           confidencePercent={94}
           sections={[
@@ -1434,7 +1631,8 @@ const AdminDashboard = () => {
           ]}
         />
         <AiTopAchieversPanel 
-          cards={aiAchievers.cards} 
+          cards={topClassAchiever}
+          classMode
           title="Academic Distinction Spotlight"
           onExport={(cards, sum) => openTopAchieversPrintWindow({
             achievers: cards,
@@ -1594,6 +1792,15 @@ const AdminDashboard = () => {
           </section>
         </section>
         )}
+
+        {activeWorkspace === 'chat' && <section className="admin-card admin-chat-directory">
+          <div className="section-head"><div><h2><FaComments /> Direct messages</h2><p>Open a private conversation with a teacher or student in your school.</p></div></div>
+          <div className="admin-chat-contact-grid">{users.filter((contact) => Number(contact.id) !== Number(user?.id)).map((contact) => <article key={contact.id} className="admin-chat-contact">
+            <div><strong>{contact.name}</strong><span>{contact.role}{contact.class_name ? ` · ${contact.class_name}` : ''}</span><small className={contact.online ? 'online' : ''}>{contact.online ? 'Online' : 'Offline'}</small></div>
+            <button type="button" className="btn-primary" onClick={() => openAdminChat(contact)}><FaComments /> Message</button>
+          </article>)}</div>
+          {!users.some((contact) => Number(contact.id) !== Number(user?.id)) && <p className="empty-state">No chat contacts on this page.</p>}
+        </section>}
 
         {activeWorkspace === 'reports' && (
           <section className="admin-insight-grid">
@@ -1840,6 +2047,81 @@ const AdminDashboard = () => {
                </button>
             </div>
 
+            <section className="admin-card fee-structure-card">
+              <header className="section-head">
+                <div>
+                  <h3><FaMoneyBillWave /> Class fee settings</h3>
+                  <p>Set the monthly amount, fine, and other charges. Existing invoices keep their saved amount.</p>
+                </div>
+              </header>
+              <form className="fee-structure-form" onSubmit={saveClassFeeStructure}>
+                <label>Class
+                  <select className="form-input" value={feeEditor.class_id} onChange={(event) => {
+                    const classId = event.target.value;
+                    const existing = feeStructures.find((item) => String(item.class_id) === classId);
+                    setFeeEditor({ class_id: classId, monthly_fee: existing?.monthly_fee ?? '', fine_amount: existing?.fine_amount ?? '0', other_charges: existing?.other_charges ?? '0', tax_percent: existing?.tax_percent ?? '0', discount_amount: existing?.discount_amount ?? '0' });
+                  }}>
+                    <option value="">Choose class</option>
+                    {feeStructures.map((item) => <option key={item.class_id} value={item.class_id}>{item.class_name || `Class ${item.grade_level || ''} ${item.section || ''}`}</option>)}
+                  </select>
+                </label>
+                <label>Monthly fee (PKR)<input className="form-input" type="number" min="0" step="0.01" required value={feeEditor.monthly_fee} onChange={(event) => setFeeEditor((current) => ({ ...current, monthly_fee: event.target.value }))} /></label>
+                <label>Fine (PKR)<input className="form-input" type="number" min="0" step="0.01" value={feeEditor.fine_amount} onChange={(event) => setFeeEditor((current) => ({ ...current, fine_amount: event.target.value }))} /></label>
+                <label>Other monthly charges (PKR)<input className="form-input" type="number" min="0" step="0.01" value={feeEditor.other_charges} onChange={(event) => setFeeEditor((current) => ({ ...current, other_charges: event.target.value }))} /></label>
+                <label>Tax (%)<input className="form-input" type="number" min="0" max="100" step="0.01" value={feeEditor.tax_percent} onChange={(event) => setFeeEditor((current) => ({ ...current, tax_percent: event.target.value }))} /></label>
+                <label>Monthly discount (PKR)<input className="form-input" type="number" min="0" step="0.01" value={feeEditor.discount_amount} onChange={(event) => setFeeEditor((current) => ({ ...current, discount_amount: event.target.value }))} /></label>
+                <div className="fee-structure-actions">
+                  <button className="btn-primary" type="submit" disabled={feeSaving || !feeEditor.class_id}>{feeSaving ? 'Saving…' : 'Save fee settings'}</button>
+                  <button className="btn-secondary" type="button" onClick={generateMonthlyClassFees} disabled={feeGenerating || !feeEditor.class_id}>{feeGenerating ? 'Generating…' : `Generate ${filterMonth === 'all' ? new Date().toLocaleString('en-US', { month: 'long' }) : filterMonth} ${filterYear} invoices`}</button>
+                </div>
+              </form>
+            </section>
+
+            <section className="admin-card fee-structure-card">
+              <header className="section-head"><div><h3>Student specific fee adjustments</h3><p>Leave a field blank to inherit the class setting. Changes apply to invoices generated from now on.</p></div></header>
+              <form className="fee-structure-form" onSubmit={saveStudentFeeAdjustment}>
+                <label>Student<select className="form-input" value={studentFeeEditor.student_id} onChange={(event) => loadStudentFeeAdjustment(event.target.value)}>
+                  <option value="">Choose a student</option>
+                  {feeStudents.map((student) => <option key={student.id} value={student.id}>{student.student_code || `Student ${student.id}`} · {student.name} · {student.class_name || 'No class'}</option>)}
+                </select></label>
+                <label>Fine override (PKR)<input className="form-input" type="number" min="0" step="0.01" value={studentFeeEditor.fine_amount} onChange={(event) => setStudentFeeEditor((current) => ({ ...current, fine_amount: event.target.value }))} /></label>
+                <label>Tax override (%)<input className="form-input" type="number" min="0" max="100" step="0.01" value={studentFeeEditor.tax_percent} onChange={(event) => setStudentFeeEditor((current) => ({ ...current, tax_percent: event.target.value }))} /></label>
+                <label>Discount override (PKR)<input className="form-input" type="number" min="0" step="0.01" value={studentFeeEditor.discount_amount} onChange={(event) => setStudentFeeEditor((current) => ({ ...current, discount_amount: event.target.value }))} /></label>
+                <div className="fee-structure-actions"><button className="btn-primary" type="submit" disabled={!studentFeeEditor.student_id}>Save student adjustments</button></div>
+              </form>
+            </section>
+
+            <section className="admin-card fee-proposals-card">
+              <header className="section-head">
+                <div>
+                  <h3>Teacher fee proposals ({feeProposals.length})</h3>
+                  <p>Review the class and billing period, set the approved total, then create invoices for that class.</p>
+                </div>
+                <button className="btn-secondary" type="button" onClick={fetchFeeProposals}><FaRedo /> Refresh</button>
+              </header>
+              {feeProposals.length === 0 ? <p className="fee-proposals-empty">No proposals are waiting for review.</p> : (
+                <div className="fee-proposal-list">
+                  {feeProposals.map((proposal) => (
+                    <article className="fee-proposal-item" key={proposal.id}>
+                      <div className="fee-proposal-details">
+                        <strong>{proposal.class_name || `Class ${proposal.grade_level || ''} ${proposal.section || ''}`}</strong>
+                        <span>{proposal.month} {proposal.year} · Teacher: {proposal.teacher_name}</span>
+                        <span>Teacher proposed: {proposal.proposed_amount == null ? 'Not specified' : `PKR ${Number(proposal.proposed_amount).toLocaleString()}`}</span>
+                        {proposal.due_date && <span>Due {new Date(proposal.due_date).toLocaleDateString()}</span>}
+                      </div>
+                      <label className="fee-proposal-amount">Approved total (PKR)
+                        <input className="form-input" type="number" min="0.01" step="0.01" value={proposalAmounts[proposal.id] ?? ''} onChange={(event) => setProposalAmounts((current) => ({ ...current, [proposal.id]: event.target.value }))} />
+                      </label>
+                      <div className="fee-proposal-actions">
+                        <button className="btn-secondary" type="button" disabled={proposalActionId === proposal.id} onClick={() => reviewFeeProposal(proposal, 'rejected')}>Reject</button>
+                        <button className="btn-primary" type="button" disabled={proposalActionId === proposal.id || !proposalAmounts[proposal.id]} onClick={() => reviewFeeProposal(proposal, 'approved')}>{proposalActionId === proposal.id ? 'Saving…' : 'Approve & create invoices'}</button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
             <section className="admin-insight-grid">
               <article className="admin-card">
                 <h3><FaChartPie /> Collection Budget ({filterMonth === 'all' ? 'Historical Total' : filterMonth})</h3>
@@ -1884,7 +2166,8 @@ const AdminDashboard = () => {
               <div className="mini-table">
                 {filteredFeeRequests.map(req => (
                   <div key={req.id} className="mini-table-row" onClick={() => openFeeRequestModal(req.id)}>
-                    <span><strong>{req.student_name}</strong></span>
+                    <span><strong>{req.student_name}</strong>{req.student_code ? <small className="fee-request-student-code">{req.student_code}</small> : null}</span>
+                    <span className="glass-chip">{req.payment_method === 'cash' ? 'Hand cash' : 'Online'}</span>
                     <span>TX: {req.transaction_id}</span>
                     <span><span className="glass-chip">PENDING</span></span>
                     <button className="btn-details-link">Review Receipt</button>
@@ -1893,6 +2176,14 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
+        )}
+        {activeWorkspace === 'salary' && (
+          <section className="billing-workspace">
+            <article className="admin-card" style={{ padding: 24 }}>
+              <header className="section-head"><div><h2><FaMoneyBillWave /> Teacher salary requests</h2><p>Review salary, advance, and correction requests from teachers in your school.</p></div><button type="button" className="btn-secondary" onClick={loadTeacherSalaryRequests}><FaRedo /> Refresh</button></header>
+              {teacherSalaryRequests.length ? <div className="table-scroll-x"><table className="attendance-edit-table"><thead><tr><th>Teacher</th><th>Request</th><th>Deduction period</th><th>Amount</th><th>Reason</th><th>Status / response</th><th>Review</th></tr></thead><tbody>{teacherSalaryRequests.map((request) => <tr key={request.id}><td>{request.teacher_name}<small style={{ display: 'block' }}>{request.teacher_email}</small></td><td>{request.request_type}{request.advance_percentage ? ` (${request.advance_percentage}%)` : ''}</td><td>{request.month} {request.year}</td><td>{formatCurrency(request.amount)}</td><td>{request.reason}</td><td>{request.status}{request.admin_response ? <small style={{ display: 'block' }}>{request.admin_response}</small> : null}</td><td>{request.status === 'pending' ? <div style={{ minWidth: 180 }}><input className="form-input" placeholder="Optional response" value={salaryRequestReview[request.id] || ''} onChange={(event) => setSalaryRequestReview((current) => ({ ...current, [request.id]: event.target.value }))} /><div style={{ display: 'flex', gap: 8, marginTop: 6 }}><button type="button" className="btn-primary" disabled={salaryRequestBusy === request.id} onClick={() => reviewSalaryRequest(request.id, 'approved')}>Approve</button><button type="button" className="btn-secondary" disabled={salaryRequestBusy === request.id} onClick={() => reviewSalaryRequest(request.id, 'rejected')}>Reject</button></div></div> : 'Reviewed'}</td></tr>)}</tbody></table></div> : <p>No teacher salary requests yet.</p>}
+            </article>
+          </section>
         )}
       </main>
 
@@ -2319,6 +2610,7 @@ const AdminDashboard = () => {
                   <div style={{ fontSize: '12px', color: '#64748b' }}>
                     Class: {feeRequestModal.request?.class_name || 'Assigned Section'}
                   </div>
+                  {feeRequestModal.request?.student_code && <div style={{ fontSize: '12px', color: '#64748b' }}>Student ID: {feeRequestModal.request.student_code}</div>}
                 </div>
                 <div style={{
                   background: '#f8fafc',
@@ -2349,6 +2641,9 @@ const AdminDashboard = () => {
                   <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', fontFamily: 'monospace' }}>
                     {feeRequestModal.request?.transaction_id || 'N/A'}
                   </div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f766e', marginTop: 8 }}>
+                    Payment channel: {feeRequestModal.request?.payment_method === 'cash' ? 'Hand cash' : 'Online transfer'}
+                  </div>
                 </div>
               </div>
 
@@ -2362,7 +2657,7 @@ const AdminDashboard = () => {
                 }}>
                   📸 Payment Screenshot
                 </div>
-                {feeRequestModal.request?.screenshot_url || feeRequestModal.request?.screenshot ? (
+                    {feeRequestModal.request?.signed_screenshot_url || feeRequestModal.request?.screenshot_url || feeRequestModal.request?.screenshot ? (
                   <div style={{
                     border: '1px solid #e2e8f0',
                     borderRadius: '12px',
@@ -2370,7 +2665,7 @@ const AdminDashboard = () => {
                     background: '#f8fafc'
                   }}>
                     <img
-                      src={resolveMediaUrl(feeRequestModal.request.screenshot_url || feeRequestModal.request.screenshot)}
+                      src={resolveMediaUrl(feeRequestModal.request.signed_screenshot_url || feeRequestModal.request.screenshot_url || feeRequestModal.request.screenshot)}
                       alt="Payment screenshot"
                       style={{
                         width: '100%',
@@ -2379,7 +2674,7 @@ const AdminDashboard = () => {
                         cursor: 'pointer',
                         display: 'block'
                       }}
-                      onClick={() => setLightboxImage(resolveMediaUrl(feeRequestModal.request.screenshot_url || feeRequestModal.request.screenshot))}
+                      onClick={() => setLightboxImage(resolveMediaUrl(feeRequestModal.request.signed_screenshot_url || feeRequestModal.request.screenshot_url || feeRequestModal.request.screenshot))}
                     />
                   </div>
                 ) : (
@@ -2486,7 +2781,7 @@ const AdminDashboard = () => {
         </div>
       ) : null}
 
-      {deleteModal.show && (
+      {deleteModal.show && <OverlayPortal>
         <div className="modal-overlay delete-modal-overlay">
           <div className="delete-modal">
             <h4 className="delete-modal-title">Delete Message?</h4>
@@ -2499,7 +2794,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-      )}
+      </OverlayPortal>}
 
       {lightboxImage && (
         <div className="lightbox" onClick={() => setLightboxImage(null)}>

@@ -6,7 +6,7 @@ import { toast } from "react-hot-toast";
 import {
   FaBullhorn, FaUser, FaComments, FaBell, FaCalendarCheck, FaMoneyBillWave,
   FaBookOpen, FaChartLine, FaTimes, FaDownload, FaChevronLeft, FaChevronRight,
-  FaChartArea, FaChartBar, FaCheck, FaHome, FaCloud
+  FaChartArea, FaChartBar, FaCheck, FaHome, FaCloud, FaCog
 } from "react-icons/fa";
 import useSocket from "../../hooks/useSocket";
 import ChatModal from "../../components/chat/ChatModal";
@@ -78,6 +78,9 @@ const StudentDashboard = () => {
   const [downloadingReceiptId, setDownloadingReceiptId] = useState(null);
   const [openingChatId, setOpeningChatId] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [profileBio, setProfileBio] = useState('');
+  const [loginDevices, setLoginDevices] = useState([]);
+  const [savingBio, setSavingBio] = useState(false);
 
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -342,6 +345,10 @@ const StudentDashboard = () => {
       setLoading(false);
     }
   }, [logout, user?.id]);
+
+  useEffect(() => {
+    if (activeWorkspace === 'academics') fetchDashboard(true);
+  }, [activeWorkspace, fetchDashboard]);
 
   const resetComposer = () => {
     setNewMessage('');
@@ -760,6 +767,14 @@ const StudentDashboard = () => {
     };
   }, [filePreview]);
 
+  useEffect(() => { setProfileBio(dashboardData?.student?.bio || ''); }, [dashboardData?.student?.bio]);
+  useEffect(() => {
+    if (activeWorkspace !== 'settings') return;
+    API.get('/student/login-devices')
+      .then(({ data }) => setLoginDevices(data.devices || []))
+      .catch((error) => toast.error(error.response?.data?.message || 'Could not load login devices'));
+  }, [activeWorkspace]);
+
   if (loading) {
     return (
       <div className="loader-container">
@@ -785,6 +800,19 @@ const StudentDashboard = () => {
   const { student, results, teacher, homework, exams } = dashboardData || {}; // Removed unnecessary variable assignment
   const schoolBrandLogo = student?.school_logo_url || user?.school_logo_url || schoolLogo;
 
+  const saveStudentBio = async (event) => {
+    event.preventDefault();
+    setSavingBio(true);
+    try {
+      const { data } = await API.put('/student/profile', { bio: profileBio.slice(0, 50) });
+      setDashboardData((current) => ({ ...current, student: { ...current.student, bio: data.profile.bio || '' } }));
+      void fetchDashboard(true);
+      toast.success('Bio saved');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not save bio');
+    } finally { setSavingBio(false); }
+  };
+
   return (
     <DashboardShell
       title={student?.school_name || user?.school_name || 'Edu Flow'}
@@ -805,6 +833,7 @@ const StudentDashboard = () => {
         { id: 'fees', label: 'Fees', icon: FaMoneyBillWave, badge: feeReminders.length || undefined },
         { id: 'teacher', label: 'My Teacher', icon: FaUser },
         { id: 'communication', label: 'Communication', icon: FaComments, badge: unreadCount || undefined },
+        { id: 'settings', label: 'Settings', icon: FaCog },
       ]}
     >
     <div className="student-container dashboard-frame">
@@ -1031,19 +1060,19 @@ const StudentDashboard = () => {
         </>
         ) : null}
 
-        {activeWorkspace === 'communication' ? (
+        {['academics', 'communication'].includes(activeWorkspace) ? (
         <>
         <div className="communication-grid dashboard-section-spaced">
           {/* Announcements */}
-          <div className="admin-card communication-card">
+          {activeWorkspace === 'communication' && <div className="admin-card communication-card">
             <div className="section-head">
               <h3><FaBullhorn /> School Notices</h3>
             </div>
             <AnnouncementList announcements={announcements} />
-          </div>
+          </div>}
 
           {/* Exams Section */}
-          <div className="admin-card communication-card">
+          {activeWorkspace === 'academics' && <div className="admin-card communication-card">
             <div className="section-head">
               <h3><FaChartLine /> My Exams</h3>
             </div>
@@ -1075,10 +1104,10 @@ const StudentDashboard = () => {
                 </div>
               )) : <p className="empty-state">No exams assigned.</p>}
             </div>
-          </div>
+          </div>}
         </div>
 
-        <div className="admin-card communication-card dashboard-section-spaced">
+        {activeWorkspace === 'academics' && <div className="admin-card communication-card dashboard-section-spaced">
           <div className="section-head section-head-responsive">
             <h3><FaBookOpen /> Homework Diary</h3>
             <button className="btn-primary glass-btn btn-homework-action" onClick={handleDownloadWeeklyDiary} disabled={!weeklyHomework.length}>
@@ -1108,9 +1137,27 @@ const StudentDashboard = () => {
               </div>
             )}
           </div>
-        </div>
+        </div>}
         </>
         ) : null}
+
+        {activeWorkspace === 'settings' && <section className="student-settings-grid">
+          <div className="info-card student-settings-card">
+            <h3><FaCog /> Profile settings</h3>
+            <form onSubmit={saveStudentBio} className="student-bio-form">
+              <label htmlFor="student-bio">Bio <span>{profileBio.length}/50</span></label>
+              <textarea id="student-bio" maxLength={50} value={profileBio} onChange={(event) => setProfileBio(event.target.value)} placeholder="A short introduction about you" />
+              <button type="submit" className="btn-primary" disabled={savingBio}>{savingBio ? 'Saving…' : 'Save bio'}</button>
+            </form>
+          </div>
+          <div className="info-card student-settings-card">
+            <h3><FaUser /> Login devices</h3>
+            {loginDevices.length ? <div className="student-device-list">{loginDevices.map((device) => <article key={device.id} className="student-device-item">
+              <strong>{device.device_label}</strong><small>{device.user_agent || 'Browser details unavailable'}</small>
+              <small>Last login: {new Date(device.last_seen_at || device.created_at).toLocaleString()}</small>
+            </article>)}</div> : <p className="empty-state">No login device records are available yet.</p>}
+          </div>
+        </section>}
 
         {/* <div id="announcements-section" className="info-card">
           <h3>

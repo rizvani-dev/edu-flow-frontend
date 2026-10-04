@@ -98,6 +98,10 @@ export default function LandingPage() {
           </div>
 
           <div className="landing-visual" aria-label="EduFlow software preview">
+            <div className="landing-campus-photo" aria-hidden="true">
+              <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1200&q=85" alt="" />
+              <span>Learning in sync</span>
+            </div>
             <div className="visual-window visual-window--main">
               <div className="visual-window__bar">
                 <span />

@@ -99,6 +99,15 @@ const TeacherDetailsPage = () => {
     if (!salaryFormData.basic_salary || Number(salaryFormData.basic_salary) <= 0) {
       return toast.error("Basic salary must be greater than 0");
     }
+    const year = Number(salaryFormData.year);
+    if (!Number.isInteger(year) || year < 2000 || year > 2100) return toast.error('Enter a valid salary year');
+    const components = ['allowances', 'bonus', 'overtime', 'deductions', 'advance', 'fine'];
+    if (components.some((key) => !Number.isFinite(Number(salaryFormData[key] || 0)) || Number(salaryFormData[key] || 0) < 0)) {
+      return toast.error('Salary components must be zero or greater');
+    }
+    if (salaries.some((item) => item.month === salaryFormData.month && Number(item.year) === year)) {
+      return toast.error(`A salary statement for ${salaryFormData.month} ${year} already exists`);
+    }
 
     const data = new FormData();
     Object.keys(salaryFormData).forEach(key => {
@@ -164,7 +173,7 @@ const TeacherDetailsPage = () => {
   const handleDownloadSalarySlip = async (salary) => {
     setDownloadingSlipId(salary.id);
     try {
-      const response = await API.get(`/teacher/salaries/${salary.id}/slip`, {
+      const response = await API.get(`/admin/teacher-salaries/${salary.id}/slip`, {
         responseType: 'blob'
       });
       const blob = new Blob([response.data], { type: 'application/pdf' });
@@ -242,6 +251,10 @@ const TeacherDetailsPage = () => {
           <div className="salary-grid">
             {filteredSalaries.map(salary => {
               const canDownloadSlip = ['approved', 'paid', 'received'].includes(String(salary.status).toLowerCase());
+              const amount = Number(salary.amount) || 0;
+              const received = Number(salary.amount_paid || (['paid', 'received'].includes(salary.status) ? amount : 0));
+              const pending = Math.max(0, amount - received);
+              const paidPercent = amount > 0 ? Math.min(100, Math.round((received / amount) * 100)) : 0;
               return (
                 <div key={salary.id} className={`salary-card ${salary.status}`}>
                   <div className="s-card-head">
@@ -253,13 +266,18 @@ const TeacherDetailsPage = () => {
                       </small>
                     </div>
                     <span className={`status-pill ${salary.status}`}>
-                      {salary.status.toUpperCase()}
+                      {salary.status === 'received' ? 'RECEIVED · LOCKED' : salary.status.toUpperCase()}
                     </span>
                   </div>
 
-                  <div className="s-amount" style={{ marginTop: '8px' }}>
-                    Net: PKR {Number(salary.amount).toLocaleString()}
-                  </div>
+                    <div className="s-amount" style={{ marginTop: '8px' }}>
+                      Net: PKR {Number(salary.amount).toLocaleString()}
+                    </div>
+                    <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', color: '#475569', fontSize: 12, marginTop: 4 }}>
+                      <span>Received: PKR {received.toLocaleString()}</span>
+                      <span>Pending: PKR {pending.toLocaleString()}</span>
+                      <span>Paid: {paidPercent}%</span>
+                    </div>
 
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center', margin: '8px 0' }}>
                     {salary.payment_screenshot && (
@@ -323,7 +341,7 @@ const TeacherDetailsPage = () => {
 
       {showSalaryModal && (
         <div className="modal-overlay">
-          <div className="modal-box" style={{ maxWidth: '600px' }}>
+          <div className="modal-box salary-entry-modal" style={{ maxWidth: '600px' }}>
             <div className="modal-header">
               <h3><FaCalculator /> Issue Teacher Salary Statement</h3>
               <button onClick={() => setShowSalaryModal(false)}><FaTimes /></button>
@@ -447,8 +465,6 @@ const TeacherDetailsPage = () => {
                   >
                     <option value="draft">Draft</option>
                     <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="paid">Paid</option>
                   </select>
                 </div>
               </div>

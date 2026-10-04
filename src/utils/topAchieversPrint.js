@@ -11,8 +11,8 @@ export const openTopAchieversPrintWindow = ({ achievers, summary, schoolName, lo
       <div class="achiever-header">
         <div class="rank">#${card.rank || index + 1}</div>
         <div class="identity">
-          <h3>${card.title || 'Student'}</h3>
-          <p>ID: ${card.studentId || 'N/A'} | Class: ${card.className || 'N/A'}</p>
+          <h3>${card.title || (card.type === 'class' ? 'Class' : 'Student')}</h3>
+          <p>${card.type === 'class' ? `${card.studentCount || 0} students · Class performance report` : `ID: ${card.studentId || 'N/A'} | Class: ${card.className || 'N/A'}`}</p>
         </div>
         <div class="category">${card.category || 'Academic'}</div>
       </div>
@@ -23,7 +23,7 @@ export const openTopAchieversPrintWindow = ({ achievers, summary, schoolName, lo
           <span class="value">${card.attendancePercent || 0}%</span>
         </div>
         <div class="stat-item">
-          <span class="label">Result Avg</span>
+          <span class="label">${card.type === 'class' ? 'Study Results' : 'Result Avg'}</span>
           <div class="bar-bg"><div class="bar-fill result" style="width: ${card.resultPercent || 0}%"></div></div>
           <span class="value">${card.resultPercent || 0}%</span>
         </div>
@@ -33,7 +33,8 @@ export const openTopAchieversPrintWindow = ({ achievers, summary, schoolName, lo
           <span class="value">${card.feePercent || 0}%</span>
         </div>
       </div>
-      <p class="note"><strong>AI Insight:</strong> ${card.description || 'Consistent performance detected.'}</p>
+      ${card.type === 'class' ? `<div class="stats-grid"><div class="stat-item"><span class="label">On-time discipline</span><span class="value">${card.disciplinePercent || 0}%</span></div><div class="stat-item"><span class="label">Overall score</span><span class="value">${card.achievementPercent || 0}%</span></div></div>` : ''}
+      <p class="note"><strong>${card.type === 'class' ? 'Ranking' : 'AI Insight'}:</strong> ${card.type === 'class' ? 'Ranked using current results, attendance, and paid fee records.' : card.description || 'Consistent performance detected.'}</p>
     </div>
   `).join('');
 

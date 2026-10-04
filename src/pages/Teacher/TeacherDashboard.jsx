@@ -9,12 +9,13 @@ import {
   FaComments, FaBell, FaPaperclip, FaDownload, FaTimes, FaFileExcel, FaEdit, FaSearch, FaBookOpen,
   FaChartArea, FaTrash, FaPrint, FaFileCsv, FaPaperPlane, FaCalendarCheck, FaCheckSquare, 
   FaEllipsisV, FaChartPie, FaMoneyBillWave, FaSave, FaUserEdit, FaMicrophone, FaStopCircle, FaHeart, FaHome, FaUsersCog, FaTools, FaSpinner, FaCloud, FaCog, FaUser,
-  FaRobot} from "react-icons/fa";
+  FaRobot, FaUserShield} from "react-icons/fa";
 import AnnouncementForm from "../../components/Announcements/AnnouncementForm"; // Removed Tooltip import
 import AnnouncementList from "../../components/Announcements/AnnouncementList";
 import useSocket from "../../hooks/useSocket";
 import ChatModal from "../../components/chat/ChatModal";
 import DashboardShell from "../../components/layout/DashboardShell";
+import OverlayPortal from "../../components/common/OverlayPortal";
 import AiInsightPanel from "../../components/ai/AiInsightPanel";
 import AttendanceSection from "../../components/Attendance/AttendanceSection";
 import AiTopAchieversPanel from "../../components/ai/AiTopAchieversPanel";
@@ -121,6 +122,7 @@ const formatHomeworkDuration = (homework) => {
   const unit = String(homework?.duration_unit || 'days');
   return `${value} ${value === 1 ? unit.replace(/s$/, '') : unit}`;
 };
+const formatCurrencyTeacher = (value) => `PKR ${Number(value || 0).toLocaleString()}`;
 
 const AttendanceOperations = ({ navigate, setShowFeeModal }) => (
   <div className="attendance-upload-section">
@@ -213,6 +215,11 @@ const TeacherDashboard = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [salaryPopup, setSalaryPopup] = useState({ open: false, salary: null, notifId: null, loading: false });
+  const [salaryRows, setSalaryRows] = useState([]);
+  const [schoolAdmins, setSchoolAdmins] = useState([]);
+  const [salaryRequests, setSalaryRequests] = useState([]);
+  const [salaryRequestForm, setSalaryRequestForm] = useState({ month: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleString('en-US', { month: 'long' }), year: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).getFullYear(), amount: '', advance_percentage: '', request_type: 'salary', reason: '' });
+  const [salaryRequestBusy, setSalaryRequestBusy] = useState(false);
   const [generatingWithAi, setGeneratingWithAi] = useState(false);
   const [exams, setExams] = useState([]);
   const [showExamModal, setShowExamModal] = useState(false);
@@ -294,6 +301,37 @@ const TeacherDashboard = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportMonth, setReportMonth] = useState("all");
   const [activeWorkspace, setActiveWorkspace] = useState(() => getUiState(CACHE_KEYS.DASHBOARD_VIEW('teacher', user?.id || 'anon'), 'overview'));
+
+  const loadTeacherSalary = useCallback(async () => {
+    try {
+      const [salaryRes, requestRes] = await Promise.all([API.get('/teacher/salaries'), API.get('/teacher/salary-requests')]);
+      setSalaryRows(salaryRes.data.salaries || []);
+      setSalaryRequests(requestRes.data.requests || []);
+    } catch (error) { toast.error(error.response?.data?.message || 'Could not load salary records'); }
+  }, []);
+
+  useEffect(() => { if (activeWorkspace === 'salary') loadTeacherSalary(); }, [activeWorkspace, loadTeacherSalary]);
+
+  const submitSalaryRequest = async (event) => {
+    event.preventDefault();
+    setSalaryRequestBusy(true);
+    try {
+      await API.post('/teacher/salary-requests', salaryRequestForm);
+      toast.success('Salary request sent to your admin');
+      setSalaryRequestForm((form) => ({ ...form, amount: '', reason: '' }));
+      await loadTeacherSalary();
+    } catch (error) { toast.error(error.response?.data?.message || 'Could not submit salary request'); }
+    finally { setSalaryRequestBusy(false); }
+  };
+
+  const openSalarySlip = async (salaryId) => {
+    try {
+      const response = await API.get(`/teacher/salaries/${salaryId}/slip`, { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (error) { toast.error(error.response?.data?.message || 'Could not open salary slip'); }
+  };
 
   const chatMessagesRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -713,7 +751,7 @@ const TeacherDashboard = () => {
     try {
       setCreatingFeeProposal(true);
       const response = await API.post('/fees/proposals', feeProposalForm);
-      toast.success(response.data.message || 'Fee proposal created');
+      toast.success(response.data.message || 'Fee proposal submitted for admin approval');
       setShowFeeProposalModal(false);
       setFeeProposalForm({ month: '', year: new Date().getFullYear(), due_date: '', amount: '' });
       await fetchClassFees();
@@ -725,26 +763,30 @@ const TeacherDashboard = () => {
     }
   };
 
-  const reviewTeacherFeeRequest = async (requestId, status) => {
-    const remarks = status === 'rejected' ? window.prompt('Reason for rejection (optional):') || '' : '';
+  const handleUpdateFeeStatus = async (feeId) => {
     try {
-      await API.put(`/fees/payment-requests/${requestId}`, { status, remarks });
-      toast.success(`Payment ${status}`);
+      await API.post('/fees/teacher-status-requests', { fee_id: feeId, status: 'paid' });
+      toast.success('Cash payment sent to an admin for approval');
       await fetchClassFees();
       await fetchFeeStats();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update payment');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not request payment approval');
     }
   };
 
-  const handleUpdateFeeStatus = async (feeId, newStatus) => {
+  const openFeePaymentProof = async (requestId) => {
+    const previewWindow = window.open('about:blank', '_blank');
+    if (!previewWindow) {
+      toast.error('Allow pop-ups to view the payment proof');
+      return;
+    }
     try {
-      await API.put(`/fees/update/${feeId}`, { status: newStatus });
-      toast.success(`Fee marked as ${newStatus}`);
-      await fetchClassFees();
-      await fetchFeeStats(); // Update analytics immediately
-    } catch (err) {
-      toast.error("Failed to update fee status");
+      const response = await API.get(`/fees/payment-requests/${requestId}/proof`);
+      previewWindow.opener = null;
+      previewWindow.location.href = response.data.url;
+    } catch (error) {
+      previewWindow.close();
+      toast.error(error.response?.data?.message || 'Could not open payment proof');
     }
   };
 
@@ -837,19 +879,28 @@ const TeacherDashboard = () => {
     }
   }, [user.id]);
 
+  useEffect(() => {
+    if (activeWorkspace !== 'adminChat') return;
+    API.get('/teacher/chat/admins')
+      .then(({ data }) => setSchoolAdmins(data.admins || []))
+      .catch(() => toast.error('Could not load school administrators'));
+  }, [activeWorkspace]);
+
   const openTeacherChat = useCallback(async (student, before = null) => {
     setOpeningChatId(student.id);
     setSelectedStudent(student);
 
     // Auto-mark notifications as read when opening chat
-    try {
-      await API.put(`/teacher/notifications/read-type/chat/${student.id}`);
-      setNotifications(prev => prev.map(n => 
-        (n.type === 'chat' && Number(n.related_user_id) === Number(student.id)) 
-        ? { ...n, is_read: true } : n
-      ));
-    } catch (err) {
-      console.error("Failed to mark chat notifications as read", err);
+    if (student.role !== 'admin') {
+      try {
+        await API.put(`/teacher/notifications/read-type/chat/${student.id}`);
+        setNotifications(prev => prev.map(n => 
+          (n.type === 'chat' && Number(n.related_user_id) === Number(student.id)) 
+          ? { ...n, is_read: true } : n
+        ));
+      } catch (err) {
+        console.error("Failed to mark chat notifications as read", err);
+      }
     }
 
     if (!before) {
@@ -1619,6 +1670,8 @@ const teacherBrandLogo = user?.school_logo_url || schoolLogo;
         { id: 'overview', label: 'Overview', icon: FaHome },
         { id: 'students', label: 'Students', icon: FaUsersCog },
         { id: 'operations', label: 'Operations', icon: FaTools, badge: feeReminderRows.length || undefined },
+        { id: 'salary', label: 'Salary', icon: FaMoneyBillWave, badge: salaryRequests.filter((request) => request.status === 'rejected').length || undefined },
+        { id: 'adminChat', label: 'Admin Chat', icon: FaUserShield },
         { id: 'settings', label: 'Settings', icon: FaCog },
       ]}
     >
@@ -1678,6 +1731,7 @@ const teacherBrandLogo = user?.school_logo_url || schoolLogo;
                   <div className={`glass-badge ${salaryPopup.salary.status}`}>
                     {salaryPopup.salary.status === 'pending' ? '⏳ PENDING' :
                      salaryPopup.salary.status === 'approved' ? '✅ APPROVED' :
+                     salaryPopup.salary.status === 'paid' ? '💵 PAID · CONFIRM RECEIPT' :
                      salaryPopup.salary.status === 'received' ? '💰 RECEIVED' : '❌ REJECTED'}
                   </div>
 
@@ -1740,7 +1794,7 @@ const teacherBrandLogo = user?.school_logo_url || schoolLogo;
                     >
                       Close
                     </button>
-                    {salaryPopup.salary.status !== 'received' && (
+                    {salaryPopup.salary.status === 'paid' && (
                       <>
                         <button
                           className="btn btn-danger"
@@ -1778,6 +1832,12 @@ const teacherBrandLogo = user?.school_logo_url || schoolLogo;
                         </button>
                       </>
                     )}
+                    {['pending', 'approved'].includes(salaryPopup.salary.status) && (
+                      <p style={{ flexBasis: '100%', margin: 0, color: '#64748b', fontSize: 13 }}>
+                        The administration has not marked this salary as paid yet. Receipt confirmation will be available after payment is recorded.
+                      </p>
+                    )}
+                    {salaryPopup.salary.status === 'received' && <p style={{ flexBasis: '100%', margin: 0, color: '#15803d', fontSize: 13 }}>Receipt confirmed. This salary record is locked.</p>}
                   </div>
                 </div>
               )}
@@ -1889,6 +1949,35 @@ const teacherBrandLogo = user?.school_logo_url || schoolLogo;
               setIsEditingBio={setIsEditingBio}
             />
           </div>
+        ) : null}
+
+        {activeWorkspace === 'adminChat' ? (
+          <section className="admin-card" style={{ margin: '0 24px 24px', padding: 24 }}>
+            <header className="section-head"><div><h2><FaUserShield /> School administrators</h2><p>Send a private message to your school administration.</p></div></header>
+            {schoolAdmins.length ? <div className="homework-grid-teacher">{schoolAdmins.map((admin) => <article className="teacher-homework-card" key={admin.id}>
+              <h3>{admin.name}</h3><p>{admin.email}</p><p>{admin.bio || 'School administrator'}</p>
+              <button type="button" className="btn-primary" disabled={openingChatId === admin.id} onClick={() => openTeacherChat({ ...admin, role: 'admin' })}>{openingChatId === admin.id ? 'Opening…' : 'Message admin'}</button>
+            </article>)}</div> : <p>No school administrator accounts are available.</p>}
+          </section>
+        ) : null}
+
+        {activeWorkspace === 'salary' ? (
+          <section className="admin-card" style={{ margin: '0 24px 24px', padding: 24 }}>
+            <header className="section-head"><div><h2><FaMoneyBillWave /> Salary</h2><p>Your salary invoices, approvals, and requests to the administration.</p></div><button type="button" className="btn-secondary" onClick={loadTeacherSalary}>Refresh</button></header>
+            {salaryRequestForm.request_type === 'advance' && <p className="salary-advance-note">The requested percentage is calculated from your latest salary statement. An approved amount is recorded and deducted from the salary statement for the selected month with your reason in its remarks.</p>}
+            <form onSubmit={submitSalaryRequest} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, margin: '20px 0' }}>
+              <select className="form-input" value={salaryRequestForm.request_type} onChange={(e) => setSalaryRequestForm({ ...salaryRequestForm, request_type: e.target.value })}><option value="salary">Salary</option><option value="advance">Advance</option><option value="correction">Correction</option></select>
+              <label className="salary-deduction-period-label">Salary deduction period<select className="form-input" value={salaryRequestForm.month} onChange={(e) => setSalaryRequestForm({ ...salaryRequestForm, month: e.target.value })}>{['January','February','March','April','May','June','July','August','September','October','November','December'].map((month) => <option key={month}>{month}</option>)}</select></label>
+              <input className="form-input" type="number" min="2000" max="2100" value={salaryRequestForm.year} onChange={(e) => setSalaryRequestForm({ ...salaryRequestForm, year: e.target.value })} aria-label="Year" />
+              {salaryRequestForm.request_type === 'advance' ? <input className="form-input" type="number" min="0.01" max="50" step="0.01" required placeholder="Advance (% of latest salary, max 50%)" value={salaryRequestForm.advance_percentage} onChange={(e) => setSalaryRequestForm({ ...salaryRequestForm, advance_percentage: e.target.value })} /> : <input className="form-input" type="number" min="1" step="0.01" required placeholder="Amount (PKR)" value={salaryRequestForm.amount} onChange={(e) => setSalaryRequestForm({ ...salaryRequestForm, amount: e.target.value })} />}
+              <input className="form-input" required placeholder="Reason" value={salaryRequestForm.reason} onChange={(e) => setSalaryRequestForm({ ...salaryRequestForm, reason: e.target.value })} />
+              <button className="btn-primary" type="submit" disabled={salaryRequestBusy}>{salaryRequestBusy ? 'Sending…' : 'New request'}</button>
+            </form>
+            <h3>My requests</h3>
+            {salaryRequests.length ? <div className="table-scroll-x"><table className="attendance-edit-table"><thead><tr><th>Type</th><th>Deduction period</th><th>Amount</th><th>Reason</th><th>Status</th><th>Admin response</th></tr></thead><tbody>{salaryRequests.map((request) => <tr key={request.id}><td>{request.request_type}{request.advance_percentage ? ` (${request.advance_percentage}%)` : ''}</td><td>{request.month} {request.year}</td><td>{formatCurrencyTeacher(request.amount)}</td><td>{request.reason}</td><td>{request.status}</td><td>{request.admin_response || '—'}</td></tr>)}</tbody></table></div> : <p>No requests yet. You can submit a new request above or request again after a previous decision.</p>}
+            <h3 style={{ marginTop: 24 }}>Salary invoices</h3>
+            {salaryRows.length ? <div className="table-scroll-x"><table className="attendance-edit-table"><thead><tr><th>Period</th><th>Salary</th><th>Received</th><th>Pending</th><th>Paid %</th><th>Status</th><th>Remarks</th><th>Invoice</th></tr></thead><tbody>{salaryRows.map((salary) => { const total = Number(salary.amount || 0); const paid = Number(salary.amount_paid || 0); const pending = Number(salary.amount_pending ?? Math.max(total - paid, 0)); const percentage = total > 0 ? Math.min(100, Math.round((paid / total) * 100)) : 0; return <tr key={salary.id}><td>{salary.month} {salary.year}</td><td>{formatCurrencyTeacher(total)}</td><td>{formatCurrencyTeacher(paid)}</td><td>{formatCurrencyTeacher(pending)}</td><td>{percentage}%</td><td>{salary.status === 'received' ? 'Received · locked' : salary.status}</td><td>{salary.remarks || '—'}</td><td><button type="button" className="btn-secondary" onClick={() => openSalarySlip(salary.id)}>View slip</button></td></tr>; })}</tbody></table></div> : <p>No salary invoices issued yet.</p>}
+          </section>
         ) : null}
        
 
@@ -2025,10 +2114,13 @@ const teacherBrandLogo = user?.school_logo_url || schoolLogo;
                       <td className="action-cell">
                         {fee.payment_request_status === 'pending' ? (
                           <>
-                            {fee.screenshot_url && <button onClick={() => window.open(resolveMediaUrl(fee.screenshot_url), '_blank')} className="print-btn" title="View payment screenshot"><FaDownload /></button>}
-                            <button onClick={() => reviewTeacherFeeRequest(fee.payment_request_id, 'approved')} className="print-btn" title="Approve payment"><FaCheck /></button>
-                            <button onClick={() => reviewTeacherFeeRequest(fee.payment_request_id, 'rejected')} className="print-btn" title="Reject payment"><FaTimes /></button>
+                            {fee.screenshot_url && <button onClick={() => openFeePaymentProof(fee.payment_request_id)} className="print-btn" title="View payment screenshot"><FaDownload /></button>}
+                            <span className="fee-pending-note">Awaiting admin approval</span>
                           </>
+                        ) : fee.status !== 'paid' ? (
+                          <button onClick={() => handleUpdateFeeStatus(fee.id)} className="print-btn" title="Request admin approval for cash received">
+                            <FaCheck /> Request cash confirmation
+                          </button>
                         ) : (
                           <button onClick={() => handlePrintReceipt(fee)} className="print-btn" title="Print Receipt"><FaPrint /></button>
                         )}
@@ -2087,7 +2179,7 @@ const teacherBrandLogo = user?.school_logo_url || schoolLogo;
               <button onClick={() => setShowFeeProposalModal(false)} className="close-btn">×</button>
             </div>
             <form className="modal-body" onSubmit={createFeeProposal}>
-              <p className="sub-text">Configured class pricing is used automatically. Enter an amount only when no class fee structure has been configured.</p>
+              <p className="sub-text">This proposal goes to the school admin for review. No student invoices are created until it is approved.</p>
               <div className="form-group">
                 <label>Month</label>
                 <select className="ui-select" value={feeProposalForm.month} onChange={(event) => setFeeProposalForm((value) => ({ ...value, month: event.target.value }))} required>
@@ -2100,8 +2192,8 @@ const teacherBrandLogo = user?.school_logo_url || schoolLogo;
                 <input className="ui-field" type="number" min="2020" max="2100" value={feeProposalForm.year} onChange={(event) => setFeeProposalForm((value) => ({ ...value, year: Number(event.target.value) }))} required />
               </div>
               <div className="form-group">
-                <label>Monthly amount (PKR)</label>
-                <input className="ui-field" type="number" min="0.01" step="0.01" value={feeProposalForm.amount} onChange={(event) => setFeeProposalForm((value) => ({ ...value, amount: event.target.value }))} placeholder="Required if no class structure exists" />
+                <label>Suggested monthly amount (PKR)</label>
+                <input className="ui-field" type="number" min="0.01" step="0.01" value={feeProposalForm.amount} onChange={(event) => setFeeProposalForm((value) => ({ ...value, amount: event.target.value }))} placeholder="Optional suggestion for admin" />
               </div>
               <div className="form-group">
                 <label>Due date</label>
@@ -2359,7 +2451,7 @@ const teacherBrandLogo = user?.school_logo_url || schoolLogo;
       /> {/* End of ChatModal component */}
 
       {/* WhatsApp Style Delete Confirmation Modal */}
-      {deleteModal.show && (
+      {deleteModal.show && <OverlayPortal>
         <div className="modal-overlay delete-modal-overlay">
           <div className="delete-modal">
             <h4 className="delete-modal-title">Delete Message?</h4>
@@ -2381,7 +2473,7 @@ const teacherBrandLogo = user?.school_logo_url || schoolLogo;
             </div>
           </div>
         </div>
-      )}
+      </OverlayPortal>}
 
       {/* AI Exam Creation Modal */}
       {showExamModal && (

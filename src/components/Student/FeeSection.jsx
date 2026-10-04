@@ -41,6 +41,17 @@ const FeeSection = React.memo(({
         </td>
         <td data-label="Amount">
           <strong>PKR {Number(fee.amount || 0).toLocaleString()}</strong>
+          {(Number(fee.tax_amount) > 0 || Number(fee.discount_amount) > 0 || Number(fee.fine_amount) > 0) && (
+            <small className="fee-period-meta fee-breakdown-note">
+              {Number(fee.tax_amount) > 0 ? `Tax PKR ${Number(fee.tax_amount).toLocaleString()} · ` : ''}
+              {Number(fee.fine_amount) > 0 ? `Fine PKR ${Number(fee.fine_amount).toLocaleString()} · ` : ''}
+              {Number(fee.discount_amount) > 0 ? `Discount −PKR ${Number(fee.discount_amount).toLocaleString()}` : ''}
+            </small>
+          )}
+        </td>
+        <td data-label="Paid via">
+          {fee.payment_method ? <span className="glass-chip">{fee.payment_method === 'cash' ? 'Hand cash' : 'Online'}</span> : <span className="fee-period-meta">—</span>}
+          {fee.transaction_id ? <small className="fee-period-meta fee-transaction-ref">TX: {fee.transaction_id}</small> : null}
         </td>
         <td data-label="Status">
           <span className={`badge ${String(fee.status).toLowerCase()}`}>
@@ -119,6 +130,14 @@ const FeeSection = React.memo(({
               {diffDays == null ? 'Due date unavailable' : `Due ${dueDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
             </span>
           </div>
+          {(Number(currentFee?.tax_amount) > 0 || Number(currentFee?.fine_amount) > 0 || Number(currentFee?.discount_amount) > 0) && (
+            <p className="fee-breakdown-note">
+              {Number(currentFee?.fine_amount) > 0 ? `Fine PKR ${Number(currentFee.fine_amount).toLocaleString()} · ` : ''}
+              {Number(currentFee?.tax_amount) > 0 ? `Tax PKR ${Number(currentFee.tax_amount).toLocaleString()} · ` : ''}
+              {Number(currentFee?.discount_amount) > 0 ? `Discount −PKR ${Number(currentFee.discount_amount).toLocaleString()}` : ''}
+            </p>
+          )}
+          {currentFee?.payment_method && <p className="fee-breakdown-note">Paid via {currentFee.payment_method === 'cash' ? 'hand cash' : 'online transfer'}{currentFee.transaction_id ? ` · TX: ${currentFee.transaction_id}` : ''}</p>}
 
           {/* Overdue / Reminder Warning */}
           {isCurrentPayable && diffDays != null && (
@@ -239,6 +258,7 @@ const FeeSection = React.memo(({
               <tr>
                 <th>Month / Period</th>
                 <th>Fee Amount</th>
+                <th>Paid via / Transaction</th>
                 <th>Payment Status</th>
                 <th>Actions</th>
               </tr>

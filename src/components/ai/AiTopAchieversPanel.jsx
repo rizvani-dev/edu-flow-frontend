@@ -3,13 +3,13 @@ import { FaRobot, FaDownload, FaChartLine, FaStar, FaUserGraduate, FaMoneyBillWa
 import { resolveMediaUrl } from '../../utils/media';
 import './aiPanels.css';
 
-const AiTopAchieversPanel = ({ cards = [], summary, onExport, onAiConsult }) => {
+const AiTopAchieversPanel = ({ cards = [], summary, onExport, onAiConsult, classMode = false }) => {
   return (
     <section className="ai-glass-panel ai-achiever-panel">
       <div className="ai-panel-header">
         <div>
           <p className="ai-panel-kicker">AI Recognition Engine</p>
-          <h3>Top Achievers Spotlight</h3>
+          <h3>{classMode ? 'Top Achieving Class' : 'Top Achievers Spotlight'}</h3>
           <p className="ai-panel-subtitle">{summary || 'Real-time performance metrics and AI-driven growth tracking.'}</p>
         </div>
         <button className="ai-export-btn" onClick={() => onExport?.(cards, summary)}>
@@ -20,22 +20,22 @@ const AiTopAchieversPanel = ({ cards = [], summary, onExport, onAiConsult }) => 
       <div className="ai-achiever-grid">
         {cards.length ? (
           cards.map((card, index) => (
-            <article key={`${card.studentId || index}-${card.category}`} className="ai-achiever-card">
+            <article key={`${card.id || card.studentId || index}-${card.category || 'class'}`} className={`ai-achiever-card ${classMode ? 'ai-class-achiever-card' : ''}`}>
               <div className="ai-achiever-glow" />
               
               <header className="achiever-card-identity">
                 <div className="achiever-avatar-wrap">
-                  {card.profileImage ? (
+                  {!classMode && card.profileImage ? (
                     <img src={resolveMediaUrl(card.profileImage)} alt={card.title} className="achiever-img" />
                   ) : (
-                    <div className="achiever-fallback">{card.title?.[0] || 'S'}</div>
+                    <div className="achiever-fallback">{classMode ? <FaUserGraduate /> : card.title?.[0] || 'S'}</div>
                   )}
                   <span className="achiever-rank-pill">#{card.rank || index + 1}</span>
                 </div>
                 <div className="achiever-meta">
                   <h4>{card.title || 'Student Achievement'}</h4>
-                  <span className="achiever-sub">ID: {card.studentId} • {card.className}</span>
-                  <span className="ai-category-chip"><FaStar /> {card.category || 'Elite'}</span>
+                  <span className="achiever-sub">{classMode ? `${card.studentCount} students` : `ID: ${card.studentId} • ${card.className}`}</span>
+                  <span className="ai-category-chip"><FaStar /> {classMode ? 'Class leader' : card.category || 'Elite'}</span>
                 </div>
               </header>
 
@@ -43,23 +43,21 @@ const AiTopAchieversPanel = ({ cards = [], summary, onExport, onAiConsult }) => 
 
               <div className="achiever-metrics-grid">
                 <div className="metric-box">
-                  <div className="metric-header"><span><FaChartLine /> Result</span> <strong>{card.resultPercent}%</strong></div>
+                  <div className="metric-header"><span><FaChartLine /> {classMode ? 'Study results' : 'Result'}</span> <strong>{card.resultPercent}%</strong></div>
                   <div className="metric-track"><span className="metric-fill result" style={{ width: `${card.resultPercent}%` }} /></div>
                 </div>
                 <div className="metric-box">
-                  <div className="metric-header"><span><FaUserGraduate /> Att.</span> <strong>{card.attendancePercent}%</strong></div>
+                  <div className="metric-header"><span><FaUserGraduate /> {classMode ? 'Overall attendance' : 'Att.'}</span> <strong>{card.attendancePercent}%</strong></div>
                   <div className="metric-track"><span className="metric-fill attendance" style={{ width: `${card.attendancePercent}%` }} /></div>
                 </div>
                 <div className="metric-box">
-                  <div className="metric-header"><span><FaMoneyBillWave /> Fees</span> <strong>{card.feePercent}%</strong></div>
+                  <div className="metric-header"><span><FaMoneyBillWave /> Fee submission</span> <strong>{card.feePercent}%</strong></div>
                   <div className="metric-track"><span className="metric-fill fee" style={{ width: `${card.feePercent}%` }} /></div>
                 </div>
               </div>
 
               <div className="achiever-actions">
-                <button className="btn-ai-consult" onClick={() => onAiConsult?.(card)}>
-                  <FaRobot /> Growth Plan
-                </button>
+                {classMode ? <div className="metric-box class-discipline-metric"><div className="metric-header"><span><FaStar /> Discipline (on time)</span><strong>{card.disciplinePercent}%</strong></div><div className="metric-track"><span className="metric-fill attendance" style={{ width: `${card.disciplinePercent}%` }} /></div></div> : <button className="btn-ai-consult" onClick={() => onAiConsult?.(card)}><FaRobot /> Growth Plan</button>}
                 <div className="achievement-score">
                   <div className="score-ring">
                     <svg viewBox="0 0 36 36">

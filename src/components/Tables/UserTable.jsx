@@ -68,7 +68,7 @@ const UserTable = ({ users, onEdit, onDelete, onAddUser, onChat, loading, isOffl
                   <div className="user-card-meta-grid">
                     <div className="meta-item">
                       <FaIdBadge className="meta-icon" />
-                      <span>ID: {user.id}</span>
+                      <span>{user.role === 'student' ? `Student ID: ${user.student_code || user.id}` : `ID: ${user.id}`}</span>
                     </div>
                     <div className="meta-item">
                       <FaSchool className="meta-icon" />

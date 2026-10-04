@@ -270,6 +270,32 @@
   color: var(--text-primary);
 }
 
+/* This component is shared by student and teacher dashboards, so define the
+ * avatar sizing here instead of relying on role-specific stylesheets. */
+.report-modal .student-report-avatar {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  max-width: 88px;
+  max-height: 88px;
+  flex: 0 0 88px;
+  overflow: hidden;
+  border: 3px solid #3b82f6;
+  border-radius: 50%;
+  aspect-ratio: 1;
+  background: #fff;
+}
+
+.report-modal .student-report-avatar img {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover;
+  object-position: center;
+}
+
 .report-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -302,6 +328,48 @@
 .report-header img{
   width: 120px;
   height: 120px;
+}
+
+.report-modal .report-header {
+  min-height: 0;
+  padding: 10px 16px;
+  margin: 0;
+  gap: 12px;
+}
+
+.report-modal .school-branding {
+  min-width: 0;
+  gap: 10px;
+}
+
+.report-modal .report-logo-wrap {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  overflow: hidden;
+}
+
+.report-modal .report-header .report-logo-wrap img {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain;
+}
+
+.report-modal .report-header .school-name h2 {
+  margin: 0;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.report-modal .report-header .school-name p {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .report-modal .modal-body {
@@ -441,4 +509,109 @@
   padding: 0 !important;
   background: transparent !important;
   border: none !important;
+}
+
+/* The student dashboard uses this compact table inside a horizontal-scroll
+ * wrapper. Let its 3-column mobile card layout size to the viewport instead. */
+.attendance-section.mini-view .table-scroll-x > .attendance-data-table {
+  width: 100%;
+  min-width: 0 !important;
+  max-width: 100%;
+  table-layout: fixed;
+}
+
+.attendance-section.mini-view .attendance-data-table td {
+  overflow-wrap: anywhere;
+}
+
+.report-modal .school-branding,
+.report-modal .school-name,
+.report-modal .student-info-mini {
+  min-width: 0;
+}
+
+.report-modal .attendance-report-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.report-modal .attendance-report-wrapper table {
+  min-width: 560px;
+}
+
+@media (max-width: 640px) {
+  .report-modal .student-report-avatar {
+    width: 68px;
+    height: 68px;
+    max-width: 68px;
+    max-height: 68px;
+    flex-basis: 68px;
+  }
+
+  .attendance-section.mini-view .attendance-data-table,
+  .attendance-section.mini-view .attendance-data-table tbody,
+  .attendance-section.mini-view .attendance-data-table tr,
+  .attendance-section.mini-view .attendance-data-table td {
+    width: 100%;
+  }
+
+  .attendance-section.mini-view .attendance-data-table td {
+    min-width: 0;
+    text-align: right;
+  }
+
+  .report-modal .report-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+  }
+
+  .report-modal .report-header > .close-btn {
+    align-self: center;
+    flex: 0 0 40px;
+    width: 40px;
+  }
+
+  .report-modal .school-branding {
+    flex: 1 1 auto;
+    width: auto;
+    gap: 8px;
+  }
+
+  .report-modal .report-logo-wrap,
+  .report-modal .report-header img {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+  }
+
+  .report-modal .report-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .report-modal .report-stat-box {
+    min-width: 0;
+    padding: 10px 6px;
+    overflow-wrap: anywhere;
+  }
+
+  .report-modal .dashboard-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .report-modal .dashboard-toolbar > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .report-modal .modal-actions .print-btn {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+  }
 }

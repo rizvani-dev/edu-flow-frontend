@@ -15,6 +15,7 @@ const AttendanceSection = ({ student, teacher, attendance: dashboardAttendance, 
   const [attendanceSearch, setAttendanceSearch] = useState('');
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportMonth, setReportMonth] = useState("all");
+  const [reportYear, setReportYear] = useState('all');
   const [reportStudentId, setReportStudentId] = useState(student ? student.id : "all");
   const [showManageModal, setShowManageModal] = useState(false);
   const [manageMode, setManageMode] = useState("manual"); // 'manual' or 'upload'
@@ -351,7 +352,7 @@ const handleExcelUpload = async () => {
     { name: "Late", value: summary.late, color: '#f59e0b' },
   ];
 
-  const getStatsForMonth = useCallback((month, targetStudentId) => {
+  const getStatsForMonth = useCallback((month, targetStudentId, year) => {
     let records = [...sourceAttendance];
 
     if (student) {
@@ -363,23 +364,27 @@ const handleExcelUpload = async () => {
     if (month !== "all") {
       records = records.filter(a => new Date(a.date).getMonth() === Number(month));
     }
+    if (year !== 'all') records = records.filter((a) => new Date(a.date).getFullYear() === Number(year));
 
+    records = records.filter((record) => String(record.status).toLowerCase() !== 'holiday');
     const total = records.length;
-    if (total === 0) return { percent: 0, present: 0, absent: 0, total: 0, level: 'good' };
+    if (total === 0) return { percent: 0, present: 0, late: 0, absent: 0, total: 0, level: 'good' };
     
     const present = records.filter(a => a.status === 'present').length;
-    const percent = Math.round((present / total) * 100);
+    const late = records.filter((a) => a.status === 'late').length;
+    const absent = records.filter((a) => a.status === 'absent').length;
+    const percent = Math.round(((present + late) / total) * 100);
     
     let level = 'good';
     if (percent < 75) level = 'warning';
     if (percent < 50) level = 'danger';
 
-    return { percent, present, absent: total - present, total, level };
+    return { percent, present, late, absent, total, level };
   }, [sourceAttendance, student]);
 
   const reportStats = useMemo(() => {
-    return getStatsForMonth(reportMonth, reportStudentId);
-  }, [getStatsForMonth, reportMonth, reportStudentId]);
+    return getStatsForMonth(reportMonth, reportStudentId, reportYear);
+  }, [getStatsForMonth, reportMonth, reportStudentId, reportYear]);
 
   // ================= PREMIUM PRINT LOGIC (Spotlight Logic) =================
   const handlePrintPDF = () => {
@@ -391,14 +396,16 @@ const handleExcelUpload = async () => {
     // Optimized filtering for PDF content
     const reportRows = source.filter(a => {
       const dateObj = new Date(a.date);
-      const matchesMonth = reportMonth === "all" || dateObj.getMonth() === parseInt(reportMonth);
+      const matchesMonth = (reportMonth === "all" || dateObj.getMonth() === parseInt(reportMonth))
+        && (reportYear === 'all' || dateObj.getFullYear() === Number(reportYear));
       const targetId = Number(student?.id || reportStudentId);
       const matchesStudent = (reportStudentId === "all" && !student) 
         || Number(a.student_id || a.studentId) === targetId;
       return matchesMonth && matchesStudent;
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    const monthLabel = reportMonth === "all" ? "Full Academic Year" : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][parseInt(reportMonth)];
+    const monthName = reportMonth === "all" ? "All months" : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][parseInt(reportMonth)];
+    const monthLabel = `${monthName}${reportYear === 'all' ? '' : ` ${reportYear}`}`;
     
     const studentInfo = student || (students && students.find(s => Number(s.id) === Number(reportStudentId)));
 
@@ -702,6 +709,10 @@ const handleExcelUpload = async () => {
                   <option key={i} value={i}>{m}</option>
                 ))}
               </select>
+              <select className="ui-select" value={reportYear} onChange={(e) => setReportYear(e.target.value)} aria-label="Report year">
+                <option value="all">All years</option>
+                {years.map((year) => <option key={year} value={year}>{year}</option>)}
+              </select>
               {teacher && !student && (
                 <select className="ui-select" value={reportStudentId} onChange={(e) => setReportStudentId(e.target.value)}>
                   <option value="all">Report: All Students</option>
@@ -726,12 +737,14 @@ const handleExcelUpload = async () => {
                   {sourceAttendance
                     .filter(a => {
                       const dateObj = new Date(a.date);
-                      const matchesMonth = reportMonth === "all" || dateObj.getMonth() === parseInt(reportMonth);
+                      const matchesMonth = (reportMonth === "all" || dateObj.getMonth() === parseInt(reportMonth))
+                        && (reportYear === 'all' || dateObj.getFullYear() === Number(reportYear));
                       const targetId = Number(student?.id || reportStudentId);
                       const matchesStudent = (reportStudentId === "all" && !student) 
                         || Number(a.student_id || a.studentId) === targetId;
                       return matchesMonth && matchesStudent;
                     })
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
                     .map(att => (
                       <tr key={att.id}>
                         {(!student && reportStudentId === "all") && (
